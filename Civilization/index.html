@@ -1,0 +1,2279 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>他们曾存在 · Echoes of Civilization</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Noto+Serif+SC:wght@300;400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap');
+:root{
+  --bg:#07050a;--b:rgba(201,168,76,0.12);--b2:rgba(201,168,76,0.06);
+  --t:#f5ede0;--m:rgba(245,237,224,0.6);--d:rgba(245,237,224,0.28);
+  --gold:#c9a84c;--gold2:rgba(201,168,76,0.35);--gold3:rgba(201,168,76,0.1);
+  --a:#c9a84c;--sw:320px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:var(--bg);overflow:hidden;font-family:'Noto Serif SC','EB Garamond',serif;color:var(--t);user-select:none}
+* { cursor:none !important }
+#cursor{position:fixed;width:10px;height:10px;border:1.5px solid var(--gold);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .15s,height .15s,background .15s;mix-blend-mode:screen}
+#cursor.h{width:24px;height:24px;background:var(--gold3)}
+#app{display:flex;width:100%;height:100%}
+#ga{flex:1;position:relative;overflow:hidden}
+canvas{position:absolute;inset:0}
+#cs{z-index:0}#cg{z-index:1;cursor:grab !important}#cg.drag{cursor:grabbing !important}
+
+/* TOP BAR */
+#tb{position:absolute;top:0;left:0;right:0;z-index:30;padding:14px 20px;display:flex;align-items:center;gap:12px;background:linear-gradient(to bottom,rgba(7,5,10,.99),transparent);pointer-events:none}
+#tb>*{pointer-events:auto}
+.logo{font-family:'Cinzel',serif;font-size:15px;font-weight:700;letter-spacing:5px;color:#f5e070;text-shadow:0 0 24px rgba(201,168,76,.8)}
+.logo-s{font-size:10px;color:rgba(245,237,224,.5);letter-spacing:2px;margin-top:2px;font-style:italic}
+.tbr{margin-left:auto;display:flex;align-items:center;gap:8px}
+.ab{height:30px;padding:0 14px;border-radius:3px;border:1px solid var(--b);background:transparent;color:var(--m);font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;cursor:pointer !important;transition:all .2s}
+.ab:hover,.ab.on{border-color:var(--gold);color:var(--gold);background:var(--gold3)}
+
+/* SIDEBAR */
+#sp{width:var(--sw);background:rgba(7,5,10,.98);border-left:1px solid var(--b);display:flex;flex-direction:column;flex-shrink:0;position:relative;z-index:20}
+.sph{padding:16px 16px 12px;border-bottom:1px solid var(--b);flex-shrink:0}
+.spt{font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:3px;color:var(--t);margin-bottom:10px;text-transform:uppercase}
+.sps{position:relative}
+.sps input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);border-radius:3px;padding:8px 28px 8px 10px;color:#fff;font-family:'Noto Serif SC',serif;font-size:13px;outline:none;transition:border-color .2s}
+.sps input::placeholder{color:rgba(245,237,224,.4);font-size:12px}
+.sps input:focus{border-color:var(--gold2)}
+.sps .si{position:absolute;right:9px;top:50%;transform:translateY(-50%);color:var(--d);font-size:12px;pointer-events:none}
+.spl{flex:1;overflow-y:auto;padding:4px 0;scrollbar-width:thin;scrollbar-color:var(--b2) transparent}
+.cr{display:flex;flex-direction:column;padding:9px 14px;cursor:pointer !important;transition:background .12s;border-bottom:1px solid rgba(201,168,76,.04)}
+.cr:hover,.cr.active{background:rgba(201,168,76,.06)}
+.cr.active .crn{color:var(--gold)}
+.cr-top{display:flex;align-items:center;gap:8px;width:100%}
+.crf{font-size:18px;flex-shrink:0;width:24px;text-align:center}
+.cri{flex:1;min-width:0}
+.crn{font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Cinzel',serif}
+.crs{font-size:11px;color:rgba(245,237,224,.7);letter-spacing:.3px;margin-top:2px}
+.cr-tags{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+.cr-tag{font-size:9px;padding:2px 7px;border:1px solid var(--b);border-radius:10px;color:var(--d);letter-spacing:.5px}
+
+/* ZOOM */
+#zw{position:absolute;bottom:56px;left:16px;z-index:30;display:flex;flex-direction:column;gap:4px}
+.zb{width:30px;height:30px;border-radius:3px;border:1px solid var(--b);background:rgba(7,5,10,.9);color:var(--m);cursor:pointer !important;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .2s;font-family:'Cinzel',serif}
+.zb:hover{border-color:var(--gold);color:var(--gold)}
+
+/* BREADCRUMB */
+#bc{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:1.5px;color:var(--m);background:rgba(7,5,10,.88);border:1px solid var(--b);border-radius:20px;padding:7px 16px;white-space:nowrap;z-index:30;font-family:'Cinzel',serif}
+.bci{cursor:pointer !important;transition:color .15s}.bci:hover,.bci.a{color:var(--gold)}.bcs{opacity:.25}
+
+/* TOOLTIP */
+#tip{position:fixed;z-index:50;pointer-events:none;background:rgba(7,5,10,.97);border:1px solid var(--gold2);border-radius:4px;padding:0;opacity:0;transition:opacity .1s;overflow:hidden;max-width:220px}
+.tip-img{width:220px;height:120px;object-fit:cover;display:block;filter:brightness(.75) sepia(.15)}
+.tip-body{padding:8px 12px}
+.tip-name{font-family:'Cinzel',serif;font-size:12px;color:var(--t);margin-bottom:2px}
+.tip-sub{font-size:10px;color:var(--d);font-style:italic}
+
+/* ═══ COUNTRY VIEW ═══ */
+#cv{position:absolute;inset:0;z-index:25;display:none;flex-direction:column;background:rgba(7,5,10,.99);overflow:hidden}
+#cv.open{display:flex}
+.cvh{padding:12px 18px;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:12px;flex-shrink:0;background:rgba(7,5,10,1)}
+.cvbk{height:32px;padding:0 16px;border-radius:3px;border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;cursor:pointer !important;font-size:12px;display:flex;align-items:center;gap:5px;transition:all .2s;flex-shrink:0;font-family:'Cinzel',serif;letter-spacing:1px}
+.cvbk:hover{border-color:var(--gold);color:var(--gold)}
+.cvflag{font-size:22px}
+.cvn{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:#fff;text-shadow:0 0 20px rgba(201,168,76,.3)}
+.cvsub{font-size:13px;color:rgba(245,237,224,.75);letter-spacing:1px;margin-top:3px;font-style:italic}
+.cvmode{margin-left:auto;display:flex;gap:6px;align-items:center}
+.mvbtn{height:28px;padding:0 12px;border-radius:3px;border:1px solid var(--b);background:transparent;color:var(--d);font-size:10px;font-weight:600;cursor:pointer !important;transition:all .2s;letter-spacing:1px;font-family:'Cinzel',serif}
+.mvbtn.active{border-color:var(--gold);color:var(--gold);background:var(--gold3)}
+.lang-toggle{height:28px;padding:0 12px;border-radius:3px;border:1px solid var(--b);background:transparent;color:var(--d);font-size:10px;cursor:pointer !important;transition:all .2s;font-family:'Cinzel',serif;letter-spacing:1px}
+.lang-toggle:hover{border-color:var(--gold);color:var(--gold)}
+
+/* ═══ COUNTRY EXPLORE AREA ═══ */
+#cv-explore{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;height:0;}
+
+/* ── TIMELINE FULL VIEW (DOM) ── */
+#cv-tl-view{flex:1;overflow:hidden;min-height:0;width:100%;position:relative;background:radial-gradient(ellipse at 50% 50%,rgba(20,10,5,1) 0%,rgba(3,2,8,1) 100%);}
+
+/* Stars background via pseudo */
+#cv-tl-view::before{content:'';position:absolute;inset:0;background-image:radial-gradient(1px 1px at 10% 20%,rgba(255,255,255,.4) 0%,transparent 100%),radial-gradient(1px 1px at 30% 60%,rgba(255,255,255,.3) 0%,transparent 100%),radial-gradient(1px 1px at 50% 15%,rgba(255,255,255,.5) 0%,transparent 100%),radial-gradient(1px 1px at 70% 80%,rgba(255,255,255,.3) 0%,transparent 100%),radial-gradient(1px 1px at 85% 35%,rgba(255,255,255,.4) 0%,transparent 100%),radial-gradient(1px 1px at 20% 85%,rgba(255,255,255,.3) 0%,transparent 100%),radial-gradient(1px 1px at 60% 45%,rgba(255,255,255,.2) 0%,transparent 100%),radial-gradient(1px 1px at 90% 10%,rgba(255,255,255,.35) 0%,transparent 100%);pointer-events:none;z-index:0;}
+
+/* DOM timeline container */
+#tl-dom{position:absolute;inset:0;z-index:1;}
+
+/* Spine line */
+#tl-spine{position:absolute;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,rgba(255,255,255,.5) 5%,rgba(255,255,255,.5) 95%,transparent);top:50%;transform:translateY(-50%);z-index:1;}
+
+/* Year tick labels */
+.tl-tick{position:absolute;top:50%;transform:translateX(-50%);text-align:center;pointer-events:none;z-index:2;}
+.tl-tick-line{width:1px;height:8px;background:rgba(255,255,255,.3);margin:0 auto 4px;}
+.tl-tick-label{font-family:'Cinzel',serif;font-size:11px;color:rgba(255,255,255,.6);font-weight:700;white-space:nowrap;}
+
+/* Zero marker */
+#tl-zero{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,220,80,.5);z-index:1;transform:translateX(-50%);}
+#tl-zero-label{position:absolute;top:50%;transform:translate(-50%,8px);font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:rgba(255,220,80,.9);}
+
+/* NOW marker */
+#tl-now{position:absolute;top:0;bottom:0;width:1px;background:rgba(100,220,255,.4);z-index:1;transform:translateX(-50%);}
+#tl-now-label{position:absolute;top:16px;transform:translateX(-50%);font-family:'Cinzel',serif;font-size:10px;color:rgba(100,220,255,.8);font-weight:700;}
+
+/* Era NODE BUTTONS — these are real DOM buttons, always clickable */
+.tl-node{
+  position:absolute;transform:translate(-50%,-50%);
+  display:flex;flex-direction:column;align-items:center;
+  cursor:pointer !important;z-index:10;
+  background:none;border:none;padding:0;
+  transition:transform .15s;
+}
+.tl-node:hover{transform:translate(-50%,-50%) scale(1.12);}
+.tl-node:hover .tl-node-dot{background:#fff;box-shadow:0 0 20px rgba(255,255,255,.7),0 0 40px rgba(255,255,255,.3);}
+.tl-node:hover .tl-node-label{color:#fff;}
+.tl-node:hover .tl-node-name{color:rgba(255,220,100,1);}
+
+.tl-node-above{flex-direction:column-reverse;}
+
+/* Dot */
+.tl-node-dot{
+  width:14px;height:14px;border-radius:50%;
+  background:rgba(255,200,80,.85);
+  box-shadow:0 0 12px rgba(255,200,80,.5);
+  border:2px solid rgba(255,255,255,.4);
+  flex-shrink:0;
+}
+/* Stem */
+.tl-node-stem{width:1.5px;height:44px;background:linear-gradient(to bottom,rgba(255,255,255,.5),rgba(255,255,255,.1));flex-shrink:0;}
+.tl-node-above .tl-node-stem{background:linear-gradient(to top,rgba(255,255,255,.5),rgba(255,255,255,.1));}
+
+/* Labels */
+.tl-node-labels{text-align:center;padding:4px 0;}
+.tl-node-label{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:rgba(255,255,255,.95);white-space:nowrap;text-shadow:0 1px 6px rgba(0,0,0,.9);}
+.tl-node-name{font-family:'Noto Serif SC',serif;font-size:12px;color:rgba(255,210,80,.85);white-space:nowrap;margin-top:2px;text-shadow:0 1px 4px rgba(0,0,0,.9);}
+.tl-node-count{font-family:'Cinzel',serif;font-size:9px;color:rgba(255,255,255,.5);margin-top:2px;}
+
+/* Popup card (hover) */
+#tl-popup{
+  position:absolute;z-index:20;pointer-events:none;
+  background:rgba(5,3,10,.97);border:1px solid rgba(255,255,255,.25);
+  border-radius:6px;padding:16px 20px;min-width:260px;max-width:340px;
+  box-shadow:0 8px 32px rgba(0,0,0,.8);
+  transition:opacity .15s;
+}
+#tl-popup-epoch{font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;color:#f0c84a;margin-bottom:5px;font-weight:700;text-transform:uppercase;}
+#tl-popup-title{font-family:'Cinzel',serif;font-size:17px;font-weight:700;color:#fff;margin-bottom:10px;}
+.tl-popup-row{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.88);margin-bottom:6px;line-height:1.5;}
+.tl-popup-row strong{color:#f0c84a;}
+
+/* Bottom hint */
+#tl-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-family:'Cinzel',serif;font-size:11px;color:rgba(255,255,255,.35);white-space:nowrap;pointer-events:none;z-index:2;letter-spacing:1px;}
+
+/* ── NEBULA VIEW ── */
+#cv-nebula-view{
+  position:absolute;inset:0;z-index:10;
+  display:none;flex-direction:column;
+  background:#03020a;overflow:hidden;
+}
+#cv-nebula-view.open{display:flex}
+#nebula-header{
+  flex-shrink:0;
+  padding:14px 20px 10px;
+  display:flex;flex-direction:column;gap:10px;
+  background:rgba(3,2,10,.92);
+  border-bottom:1px solid rgba(255,255,255,.08);
+  pointer-events:auto;z-index:5;
+}
+.nebula-header-row1{display:flex;align-items:center;gap:12px;}
+.nebula-header-row2{display:flex;align-items:center;gap:8px;}
+#nebula-back-btn{
+  height:36px;padding:0 18px;border-radius:4px;
+  border:1.5px solid rgba(255,255,255,.6);background:rgba(10,6,20,.85);
+  color:#fff;font-family:'Cinzel',serif;
+  font-size:12px;letter-spacing:1px;cursor:pointer !important;transition:all .2s;
+  font-weight:700;
+}
+#nebula-back-btn:hover{border-color:var(--gold);color:var(--gold)}
+#nebula-era-badge{
+  font-family:'Cinzel',serif;font-size:14px;font-weight:700;letter-spacing:2px;
+  color:#fff;padding:6px 18px;border-radius:20px;
+  border:1px solid rgba(201,168,76,.5);background:rgba(3,2,10,.6);
+}
+#nebula-hint{margin-left:auto;font-size:11px;color:rgba(255,255,255,.45);font-style:italic;letter-spacing:.5px;}
+
+/* ── NEBULA FILTER BAR ── */
+#nebula-filter{
+  position:absolute;bottom:0;left:0;right:0;z-index:6;
+  padding:10px 18px;display:flex;align-items:center;gap:8px;
+  background:linear-gradient(to top,rgba(3,2,10,.95),transparent);
+  pointer-events:none;
+}
+#nebula-filter>*{pointer-events:auto}
+.nf-label{font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;color:rgba(245,237,224,.5);margin-right:4px}
+.nf-btn{
+  height:30px;padding:0 14px;border-radius:15px;
+  border:1px solid rgba(255,255,255,.25);background:rgba(3,2,10,.7);
+  color:rgba(255,255,255,.7);font-family:'Cinzel',serif;
+  font-size:11px;letter-spacing:.5px;cursor:pointer !important;transition:all .2s;
+}
+.nf-btn:hover{border-color:rgba(255,255,255,.6);color:#fff;background:rgba(255,255,255,.1)}
+.nf-btn.active{border-color:#f0c84a;color:#f0c84a;background:rgba(201,168,76,.15);font-weight:700}
+
+#nebula-body{flex:1;display:flex;min-height:0;}
+#nebula-canvas{flex:1;display:block;cursor:grab;min-height:0;}
+#nebula-canvas.panning{cursor:grabbing}
+#nebula-info{
+  width:230px;flex-shrink:0;border-left:1px solid rgba(255,255,255,.1);
+  background:rgba(3,2,10,.8);padding:20px 16px;
+  display:flex;flex-direction:column;gap:10px;
+  overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent;
+}
+#nebula-info-era{font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;color:#f0c84a;text-transform:uppercase;font-weight:700;}
+#nebula-info-label{font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:#fff;line-height:1.3;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.1);}
+#nebula-info-events{display:flex;flex-direction:column;gap:8px;}
+.ni-event{padding:8px 10px;border-radius:4px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);}
+.ni-event-year{font-family:'Cinzel',serif;font-size:10px;color:#f0c84a;font-weight:700;margin-bottom:3px;}
+.ni-event-text{font-size:12px;color:rgba(255,255,255,.85);line-height:1.5;}
+#nebula-info-hint{font-size:11px;color:rgba(255,255,255,.3);text-align:center;line-height:1.6;margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,.07);font-style:italic;}
+
+/* ═══ ITEM DETAIL SIDE CARD ═══ */
+#gcard{position:absolute;top:0;right:0;width:340px;height:100%;background:rgba(5,3,14,.98);border-left:1px solid rgba(255,255,255,.12);z-index:50;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.22,1,.36,1);pointer-events:none;backdrop-filter:blur(8px);}
+#gcard.open{transform:translateX(0);pointer-events:auto}
+.gc-close{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:4px;
+  border:1px solid rgba(255,80,80,.5);background:rgba(200,40,40,.15);color:rgba(255,120,120,.9);
+  cursor:pointer !important;font-size:18px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.gc-close:hover{border-color:rgba(255,80,80,.9);background:rgba(200,40,40,.35);color:#fff;}
+.gc-header{padding:20px 18px 14px;border-bottom:1px solid var(--b)}
+.gc-img{width:100%;height:160px;object-fit:cover;display:block;filter:brightness(.7) sepia(.2)}
+.gc-img-fb{width:100%;height:160px;display:flex;align-items:center;justify-content:center;font-size:56px;background:linear-gradient(135deg,#0f0a04,#1e1508)}
+.gc-cat{font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;color:var(--gold);margin-bottom:6px;text-transform:uppercase}
+.gc-name{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:4px;text-shadow:0 0 20px rgba(201,168,76,.2)}
+.gc-name-en{font-family:'Cinzel',serif;font-size:10px;color:var(--d);letter-spacing:2px;margin-bottom:6px;font-style:italic}
+.gc-era{display:inline-block;padding:3px 12px;border:1px solid var(--gold2);border-radius:20px;font-size:9px;color:var(--gold);font-family:'Cinzel',serif;letter-spacing:1px;margin-bottom:14px}
+.gc-body{flex:1;overflow-y:auto;padding:0 18px 80px;scrollbar-width:thin;scrollbar-color:var(--b2) transparent}
+.gc-sec{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--d);margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--b);font-weight:700}
+.gc-bio{font-size:13px;line-height:1.9;color:rgba(255,255,255,.85)}
+.gc-facts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.gc-fact{background:rgba(255,255,255,.03);border:1px solid var(--b);border-radius:3px;padding:8px 10px}
+.gc-fk{font-size:10px;letter-spacing:1px;color:rgba(201,168,76,.8);margin-bottom:3px;font-family:'Cinzel',serif}
+.gc-fv{font-size:12px;color:#fff;line-height:1.4}
+.gc-links{display:flex;flex-direction:column;gap:6px}
+.gc-link{display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 12px;border-radius:3px;border:1px solid;font-size:11px;font-weight:600;letter-spacing:.4px;cursor:pointer !important;text-decoration:none;transition:all .2s;font-family:'Cinzel',serif}
+.gl-b{background:rgba(66,133,244,.05);border-color:rgba(66,133,244,.3);color:#5a9ef8}
+.gl-b:hover{background:rgba(66,133,244,.12)}
+.gl-w{background:rgba(180,180,255,.05);border-color:rgba(180,180,255,.25);color:#c4b5fd}
+.gl-w:hover{background:rgba(180,180,255,.12)}
+.gl-o{background:var(--gold3);border-color:var(--gold2);color:var(--gold)}
+.gl-o:hover{background:rgba(201,168,76,.18)}
+/* Relationships */
+.gc-rel{display:flex;align-items:center;gap:7px;font-size:11px;padding:6px 8px;border-radius:3px;background:rgba(255,255,255,.03);border:1px solid var(--b);margin-bottom:4px;cursor:pointer !important;transition:all .15s}
+.gc-rel:hover{border-color:var(--gold2);background:var(--gold3)}
+.gc-rel-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.gc-rel-name{color:var(--t);font-weight:600;flex:1;font-family:'Cinzel',serif;font-size:10px}
+.gc-rel-type{font-size:9px;letter-spacing:.5px;text-transform:uppercase;font-weight:700;color:var(--d)}
+
+/* Grain overlay */
+body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");background-size:200px 200px;opacity:.5}
+
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fadeUp .4s ease forwards}
+</style>
+</head>
+<body>
+<div id="cursor"></div>
+<div id="app">
+  <div id="ga">
+    <canvas id="cs"></canvas>
+    <canvas id="cg"></canvas>
+    <!-- TOP BAR -->
+    <div id="tb">
+      <div>
+        <div class="logo">他们曾存在</div>
+        <div class="logo-s">ECHOES OF CIVILIZATION</div>
+      </div>
+      <div class="tbr">
+        <button class="ab" id="music-btn" onclick="toggleMusic()">♪ <span id="mlabel">音乐</span></button>
+        <button class="ab" id="glang-btn" onclick="toggleGlobalLang()">EN</button>
+      </div>
+    </div>
+    <!-- ZOOM -->
+    <div id="zw">
+      <button class="zb" onclick="adjZoom(1.2)">+</button>
+      <button class="zb" onclick="adjZoom(.83)">−</button>
+    </div>
+    <!-- BREADCRUMB -->
+    <div id="bc">
+      <span class="bci a" onclick="closeCv()">✦ <span class="bc-universe">文明宇宙</span></span>
+    </div>
+    <!-- TOOLTIP -->
+    <div id="tip">
+      <img id="tip-img" class="tip-img" src="" alt="" onerror="this.style.display='none'">
+      <div class="tip-body">
+        <div id="tip-name" class="tip-name"></div>
+        <div id="tip-sub" class="tip-sub"></div>
+      </div>
+    </div>
+    <!-- COUNTRY VIEW -->
+    <div id="cv">
+      <div class="cvh">
+        <button class="cvbk" onclick="closeCv()">← <span class="cv-back-label">返回</span></button>
+        <span id="cv-flag" class="cvflag"></span>
+        <div>
+          <div id="cv-name" class="cvn"></div>
+          <div id="cv-sub" class="cvsub"></div>
+        </div>
+        <div class="cvmode">
+          <button class="lang-toggle" id="cv-lang-btn" onclick="toggleLang()">EN</button>
+        </div>
+      </div>
+      <!-- Explore area wraps timeline + nebula -->
+      <div id="cv-explore">
+        <!-- Full-height timeline (DOM-based, no canvas) -->
+        <div id="cv-tl-view">
+          <div id="tl-dom"></div>
+          <div id="tl-popup" style="display:none">
+            <div id="tl-popup-epoch"></div>
+            <div id="tl-popup-title"></div>
+            <div id="tl-popup-rows"></div>
+          </div>
+        </div>
+        <!-- Nebula overlay -->
+        <div id="cv-nebula-view">
+          <div id="nebula-header">
+            <div class="nebula-header-row1">
+              <button id="nebula-back-btn" onclick="exitNebula()">← 返回时间轴</button>
+              <div id="nebula-era-badge"></div>
+              <div id="nebula-hint">拖拽漫游 · 点击节点探索</div>
+            </div>
+            <div class="nebula-header-row2">
+              <button class="nf-btn active" data-cat="all" onclick="setNebulaFilter('all')">全部</button>
+              <button class="nf-btn" data-cat="遗迹" onclick="setNebulaFilter('遗迹')">🏛 遗迹</button>
+              <button class="nf-btn" data-cat="历史人物" onclick="setNebulaFilter('历史人物')">👤 人物</button>
+              <button class="nf-btn" data-cat="文物" onclick="setNebulaFilter('文物')">🏺 文物</button>
+              <button class="nf-btn" data-cat="博物馆" onclick="setNebulaFilter('博物馆')">🏛 博物馆</button>
+            </div>
+          </div>
+          <div id="nebula-body">
+            <canvas id="nebula-canvas"></canvas>
+            <div id="nebula-info">
+              <div id="nebula-info-era"></div>
+              <div id="nebula-info-label"></div>
+              <div id="nebula-info-events"></div>
+              <div id="nebula-info-hint">点击星云中的节点<br>查看详细信息</div>
+            </div>
+          </div>
+          <!-- Detail card (inside nebula so it layers above canvas) -->
+          <div id="gcard">
+            <div class="gc-topbar">
+              <div style="font-family:Cinzel,serif;font-size:11px;color:rgba(255,255,255,.4);letter-spacing:1px;">详情</div>
+              <button class="gc-close" onclick="closeCard()">✕</button>
+            </div>
+            <img id="gc-img" class="gc-img" src="" alt="" onerror="this.style.display='none';document.getElementById('gc-img-fb').style.display='flex'">
+            <div id="gc-img-fb" class="gc-img-fb" style="display:none"></div>
+            <div class="gc-header">
+              <div id="gc-cat" class="gc-cat"></div>
+              <div id="gc-name" class="gc-name"></div>
+              <div id="gc-name-en" class="gc-name-en"></div>
+              <div id="gc-era" class="gc-era"></div>
+            </div>
+            <div class="gc-body">
+              <button class="gc-back-btn" onclick="closeCard()">← 返回星云</button>
+              <div class="gc-sec" id="gc-sec-desc">简介</div>
+              <div id="gc-bio" class="gc-bio"></div>
+              <div class="gc-sec" id="gc-sec-facts">史料</div>
+              <div id="gc-facts" class="gc-facts"></div>
+              <div id="gc-rels-wrap" style="display:none">
+                <div class="gc-sec" id="gc-sec-rels">关联人物</div>
+                <div id="gc-rels"></div>
+              </div>
+              <div class="gc-sec" id="gc-sec-links">深入探索</div>
+              <div id="gc-links" class="gc-links"></div>
+            </div>
+          </div>
+          <!-- Filter bar (moved into header below) -->
+          <div id="nebula-filter" style="display:none">
+            <span class="nf-label">FILTER</span>
+            <button class="nf-btn active" data-cat="all" onclick="setNebulaFilter('all')">全部</button>
+            <button class="nf-btn" data-cat="遗迹" onclick="setNebulaFilter('遗迹')">🏛 遗迹</button>
+            <button class="nf-btn" data-cat="历史人物" onclick="setNebulaFilter('历史人物')">👤 人物</button>
+            <button class="nf-btn" data-cat="文物" onclick="setNebulaFilter('文物')">🏺 文物</button>
+            <button class="nf-btn" data-cat="博物馆" onclick="setNebulaFilter('博物馆')">🏛 博物馆</button>
+          </div>
+        </div>
+      </div>
+ </div>
+  </div>
+  <!-- SIDEBAR -->
+  <div id="sp">
+    <div class="sph">
+      <div class="spt" id="sp-title">文明列表</div>
+      <div class="sps">
+        <input type="text" id="search-inp" placeholder="搜索国家或文明..." id="search-inp-placeholder" oninput="filterList()">
+        <span class="si">🔍</span>
+      </div>
+    </div>
+    <div class="spl" id="sp-list"></div>
+  </div>
+</div>
+
+<script>
+// ══ Global error handler — catch all uncaught errors gracefully ══
+window.onerror = function(msg, src, line, col, err){
+  console.warn('Caught error:', msg, 'at line', line);
+  return true; // prevent default browser error
+};
+window.addEventListener('unhandledrejection', e=>{
+  console.warn('Unhandled rejection:', e.reason);
+  e.preventDefault();
+});
+
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+const LANG = {cur: 'zh'};
+
+const COUNTRIES = [
+  {id:'egypt',zh:'埃及',en:'Egypt',flag:'🇪🇬',lat:26,lon:30,
+   color:{h:38,s:80,l:55},music:'middle_east',
+   tagline:{zh:'尼罗河的馈赠，法老的永恒王国',en:'Gift of the Nile, eternal kingdom of pharaohs'},
+   heroImg:'https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=600&q=80',
+   tooltipImg:'https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=300&q=70',
+   items:[
+    {cat:'遗迹',id:'giza',zh:'吉萨金字塔群',en:'Giza Pyramid Complex',era:'前2560年',icon:'🏛️',
+     img:'https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=500&q=75',
+     desc:{zh:'世界七大奇迹之一，胡夫金字塔高146.5米，三塔与猎户座腰带精准对齐，展现古埃及人卓越的天文与工程智慧。',en:'One of the Seven Wonders of the Ancient World. The Great Pyramid of Khufu stands 146.5m tall, aligned with Orion\'s Belt.'},
+     facts:{zh:[{k:'建造年代',v:'约前2560-2490年'},{k:'高度',v:'胡夫塔原高146.5米'},{k:'建造朝代',v:'古王国第四王朝'},{k:'UNESCO',v:'1979年列入'}],
+            en:[{k:'Built',v:'c.2560–2490 BC'},{k:'Height',v:'146.5m (Khufu)'},{k:'Dynasty',v:'4th Dynasty'},{k:'UNESCO',v:'1979'}]},
+     rels:[{id:'ramesses',type:'同朝代',label:'同为法老时代'},{id:'cleopatra',type:'同文明',label:'同属埃及文明'}],
+     baidu:'https://baike.baidu.com/item/%E5%90%89%E8%90%A8%E9%87%91%E5%AD%97%E5%A1%94',wiki:'https://zh.wikipedia.org/wiki/%E5%90%89%E8%90%A8%E9%87%91%E5%AD%97%E5%A1%94%E7%BE%A4',official:'https://whc.unesco.org/en/list/86'},
+    {cat:'文物',id:'tutankhamun',zh:'图坦卡蒙黄金面具',en:'Mask of Tutankhamun',era:'前1323年',icon:'👑',
+     img:'https://images.unsplash.com/photo-1585843149061-4359e9e78e3e?w=500&q=75',
+     desc:{zh:'1922年霍华德·卡特发现，11公斤纯金打造，镶嵌青金石与玻璃。面具上的铭文保护法老灵魂平安渡过冥界。',en:'Discovered by Howard Carter in 1922. Made of 11 kg of solid gold, inlaid with lapis lazuli and glass.'},
+     facts:{zh:[{k:'重量',v:'11公斤纯金'},{k:'发现时间',v:'1922年11月'},{k:'发现者',v:'霍华德·卡特'},{k:'现藏',v:'开罗埃及博物馆'}],
+            en:[{k:'Weight',v:'11 kg gold'},{k:'Discovered',v:'Nov 1922'},{k:'Discoverer',v:'Howard Carter'},{k:'Location',v:'Egyptian Museum'}]},
+     rels:[],
+     baidu:'https://baike.baidu.com/item/%E5%9B%BE%E5%9D%A6%E5%8D%A1%E8%92%99%E9%BB%84%E9%87%91%E9%9D%A2%E5%85%B7',wiki:'https://zh.wikipedia.org/wiki/%E5%9B%BE%E5%9D%A6%E5%8D%A1%E8%92%99%E9%9D%A2%E5%85%B7',official:'https://egyptianmuseum.gov.eg/'},
+    {cat:'历史人物',id:'cleopatra',zh:'克利奥帕特拉七世',en:'Cleopatra VII',era:'前69-30年',icon:'👸',
+     img:'https://images.unsplash.com/photo-1590650153855-d9e808231d41?w=500&q=75',
+     desc:{zh:'埃及最后一位法老，托勒密王朝末代女王。精通九种语言，与凯撒、安东尼的爱情改变地中海政治格局。她的死亡标志着3000年古埃及文明的终结。',en:'The last active ruler of the Ptolemaic Kingdom. Fluent in 9 languages, her alliances with Caesar and Antony reshaped Mediterranean politics.'},
+     facts:{zh:[{k:'在位',v:'前51-30年'},{k:'语言',v:'精通9种语言'},{k:'王朝',v:'托勒密王朝最后一位'},{k:'逝世',v:'前30年，年仅39岁'}],
+            en:[{k:'Reign',v:'51–30 BC'},{k:'Languages',v:'Spoke 9 languages'},{k:'Dynasty',v:'Last Ptolemaic ruler'},{k:'Death',v:'30 BC, aged 39'}]},
+     rels:[{id:'julius_caesar',type:'盟友/情人',label:'政治联盟'},{id:'ramesses',type:'同文明',label:'均为埃及法老'}],
+     baidu:'https://baike.baidu.com/item/%E5%85%8B%E5%88%A9%E5%A5%A5%E5%B7%B4%E7%89%B9%E6%8B%89',wiki:'https://zh.wikipedia.org/wiki/%E5%85%8B%E5%88%A9%E5%A5%A5%E5%B8%95%E7%89%B9%E6%8B%89%E4%B8%83%E4%B8%96',official:'https://www.britannica.com/biography/Cleopatra-queen-of-Egypt'},
+    {cat:'历史人物',id:'ramesses',zh:'拉美西斯二世',en:'Ramesses II',era:'前1303-1213年',icon:'👑',
+     img:'https://images.unsplash.com/photo-1594456615051-e0d91ea3bab9?w=500&q=75',
+     desc:{zh:'古埃及最伟大法老之一，统治66年。主导建造阿布辛贝神庙，签署人类历史上最早的和平条约。木乃伊至今保存于开罗博物馆。',en:'One of Egypt\'s greatest pharaohs, ruling for 66 years. Built Abu Simbel and signed history\'s earliest peace treaty.'},
+     facts:{zh:[{k:'统治时长',v:'66年'},{k:'主要建筑',v:'阿布辛贝神庙'},{k:'著名战役',v:'卡叠什战役前1274年'},{k:'木乃伊',v:'现藏开罗博物馆'}],
+            en:[{k:'Reign',v:'66 years'},{k:'Monument',v:'Abu Simbel temples'},{k:'Battle',v:'Kadesh c.1274 BC'},{k:'Mummy',v:'Egyptian Museum'}]},
+     rels:[{id:'cleopatra',type:'同文明',label:'均为埃及法老'}],
+     baidu:'https://baike.baidu.com/item/%E6%8B%89%E7%BE%8E%E8%A5%BF%E6%96%AF%E4%BA%8C%E4%B8%96',wiki:'https://zh.wikipedia.org/wiki/%E6%8B%89%E7%BE%8E%E8%A5%BF%E6%96%AF%E4%B8%96',official:'https://www.britannica.com/biography/Ramses-II'},
+    {cat:'博物馆',id:'cairo_museum',zh:'埃及国家博物馆',en:'Egyptian Museum Cairo',era:'1902年建立',icon:'🏛️',
+     img:'https://images.unsplash.com/photo-1551041777-d32878d77f4a?w=500&q=75',
+     desc:{zh:'收藏超过12万件古埃及文物，二楼图坦卡蒙展厅陈列震惊世界的黄金面具。是世界最重要的古埃及文物宝库。',en:'Houses over 120,000 ancient Egyptian artifacts. The Tutankhamun gallery on the second floor features the iconic golden mask.'},
+     facts:{zh:[{k:'藏品',v:'超过12万件'},{k:'镇馆之宝',v:'图坦卡蒙黄金面具'},{k:'建立',v:'1902年'},{k:'地址',v:'开罗解放广场'}],
+            en:[{k:'Collection',v:'120,000+ artifacts'},{k:'Highlight',v:'Tutankhamun mask'},{k:'Founded',v:'1902'},{k:'Location',v:'Tahrir Square'}]},
+     rels:[],
+     baidu:'https://baike.baidu.com/item/%E5%BC%80%E7%BD%97%E5%9B%BD%E5%AE%B6%E5%8D%9A%E7%89%A9%E9%A6%86',wiki:'https://zh.wikipedia.org/wiki/%E5%9F%83%E5%8F%8A%E5%8D%9A%E7%89%A9%E9%A6%86',official:'https://egyptianmuseum.gov.eg/'},
+,
+    {cat:'遗迹',id:'sphinx',zh:'狮身人面像',en:'Great Sphinx of Giza',era:'前2500年',icon:'🦁',
+     img:'https://images.unsplash.com/photo-1553913861-c0fddf2619ee?w=500&q=75',
+     desc:{zh:'世界最大的独石雕像，高20米长73米，面朝正东迎接日出。历史上曾多次被沙子掩埋，守护者的身份至今存争议——哈夫拉法老，还是更古老的文明？',en:"The world's largest monolithic statue, 20m tall, 73m long, facing due east. Its builder remains debated — Pharaoh Khafre, or a far older civilization?"},
+     facts:{zh:[{k:'高度',v:'20米'},{k:'长度',v:'73米'},{k:'材质',v:'整块石灰岩'},{k:'朝向',v:'正东，迎接日出'}],
+            en:[{k:'Height',v:'20m'},{k:'Length',v:'73m'},{k:'Material',v:'Single limestone block'},{k:'Faces',v:'Due east, sunrise'}]},
+     rels:[{id:'giza',type:'同址',label:'吉萨高地'}],
+     baidu:'https://baike.baidu.com/item/%E7%8B%AE%E8%BA%AB%E4%BA%BA%E9%9D%A2%E5%83%8F',wiki:'https://zh.wikipedia.org/wiki/%E7%8B%AE%E8%BA%AB%E4%BA%BA%E9%9D%A2%E5%83%8F',official:'https://whc.unesco.org/en/list/86'},
+    {cat:'历史人物',id:'nefertiti',zh:'纳芙蒂蒂',en:'Nefertiti',era:'前1370-1330年',icon:'👸',
+     img:'https://images.unsplash.com/photo-1594456615051-e0d91ea3bab9?w=500&q=75',
+     desc:{zh:'阿肯那顿法老的王后，与丈夫共同推行一神崇拜改革。著名的彩绘石灰岩半身像现藏柏林，被誉为古埃及最美的艺术品之一。其真实墓穴至今未被发现。',en:'Queen of Pharaoh Akhenaten, co-ruler of one of Egypt’s most prosperous and mysterious periods. Her painted limestone bust in Berlin is one of antiquity’s greatest artworks.'},
+     facts:{zh:[{k:'时代',v:'新王国第十八王朝'},{k:'丈夫',v:'阿肯那顿法老'},{k:'名字含义',v:'美丽的来临'},{k:'雕像',v:'现藏柏林新博物馆'}],
+            en:[{k:'Period',v:'18th Dynasty New Kingdom'},{k:'Husband',v:'Pharaoh Akhenaten'},{k:'Name means',v:'The beautiful one has come'},{k:'Bust',v:'Neues Museum, Berlin'}]},
+     rels:[{id:'tutankhamun',type:'继任者',label:'图坦卡蒙可能是其子'}],
+     baidu:'https://baike.baidu.com/item/%E7%BA%B3%E8%8A%99%E8%92%82%E8%92%82',wiki:'https://zh.wikipedia.org/wiki/%E7%BA%B3%E8%8A%99%E8%92%82%E8%92%82',official:'https://www.neues-museum.de/'},
+    {cat:'文物',id:'rosetta_stone',zh:'罗塞塔石碑',en:'Rosetta Stone',era:'前196年',icon:'🪨',
+     img:'https://images.unsplash.com/photo-1577083165633-14ebcdb0f658?w=500&q=75',
+     desc:{zh:'托勒密五世时期刻制，用古埃及象形文字、世俗体文字和古希腊文写成同一内容。1799年被拿破仑军队发现，成为破译象形文字的关键，开创了埃及学。现藏大英博物馆。',en:'Carved in 196 BC in three scripts. Discovered by Napoleon’s army in 1799, it became the key to deciphering hieroglyphs and founding Egyptology.'},
+     facts:{zh:[{k:'年代',v:'前196年'},{k:'三种文字',v:'象形、世俗体、古希腊文'},{k:'发现地',v:'罗塞塔，埃及'},{k:'现藏',v:'大英博物馆，伦敦'}],
+            en:[{k:'Date',v:'196 BC'},{k:'Scripts',v:'Hieroglyphic, Demotic, Greek'},{k:'Found',v:'Rosetta, Egypt'},{k:'Location',v:'British Museum, London'}]},
+     rels:[{id:'cleopatra',type:'同朝代',label:'托勒密王朝'}],
+     baidu:'https://baike.baidu.com/item/%E7%BD%97%E5%A1%9E%E5%A1%94%E7%9F%B3%E7%A2%91',wiki:'https://zh.wikipedia.org/wiki/%E7%BD%97%E5%A1%9E%E5%A1%94%E7%9F%B3%E7%A2%91',official:'https://www.britishmuseum.org/collection/object/Y_EA24'},
+   ],
+   timeline:[
+    {era:'前3100年',label:'史前与早王朝',items:['giza','sphinx','rosetta_stone'],
+     events:[{y:'前3500年',e:'纳尔迈统一上下埃及，象形文字出现'},{y:'前3100年',e:'早王朝建立，尼罗河定期洪水孕育文明'},{y:'前2650年',e:'左塞尔金字塔建造，第一座石头建筑'}]},
+    {era:'前2560年',label:'古王国·金字塔时代',items:['giza','sphinx','cairo_museum'],
+     events:[{y:'前2560年',e:'胡夫大金字塔建造，高146.5米'},{y:'前2490年',e:'卡夫拉金字塔与狮身人面像建造'},{y:'前2200年',e:'古王国崩溃，第一中间期混乱'}]},
+    {era:'前1550年',label:'新王国·黄金时代',items:['tutankhamun','ramesses','nefertiti'],
+     events:[{y:'前1550年',e:'新王国建立，埃及帝国扩张至努比亚与黎凡特'},{y:'前1353年',e:'阿肯那顿推行一神崇拜改革'},{y:'前1323年',e:'图坦卡蒙去世，黄金面具随葬'},{y:'前1274年',e:'拉美西斯二世与赫梯签署历史最早和平条约'}]},
+    {era:'前332年',label:'希腊化与罗马时代',items:['cleopatra','rosetta_stone','cairo_museum'],
+     events:[{y:'前332年',e:'亚历山大大帝征服埃及，建亚历山大城'},{y:'前51年',e:'克利奥帕特拉七世登基，与凯撒结盟'},{y:'前30年',e:'克利奥帕特拉去世，埃及成为罗马省份'},{y:'1922年',e:'霍华德·卡特发现图坦卡蒙陵墓'}]},
+   ]},
+
+  {id:'china',zh:'中国',en:'China',flag:'🇨🇳',lat:35,lon:105,
+   color:{h:0,s:75,l:45},music:'chinese',
+   tagline:{zh:'五千年文明的连续传承',en:'5,000 years of unbroken civilization'},
+   heroImg:'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=600&q=80',
+   tooltipImg:'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=300&q=70',
+   items:[
+    {cat:'遗迹',id:'great_wall',zh:'万里长城',en:'Great Wall of China',era:'前7世纪-17世纪',icon:'🏯',
+     img:'https://images.unsplash.com/photo-1508804052814-cd3ba865a116?w=500&q=75',
+     desc:{zh:'全长约21196公里，历经秦汉明多个朝代修建，是人类历史上最伟大的建筑工程之一。蜿蜒于崇山峻岭之间，既是军事防御工事，也是中华精神的象征。',en:'Stretching over 21,000 km across multiple dynasties, the Great Wall is one of humanity\'s greatest construction feats.'},
+     facts:{zh:[{k:'总长度',v:'约21196公里'},{k:'主要朝代',v:'秦汉明'},{k:'建造时期',v:'前7世纪至17世纪'},{k:'UNESCO',v:'1987年'}],
+            en:[{k:'Length',v:'~21,196 km'},{k:'Dynasties',v:'Qin, Han, Ming'},{k:'Period',v:'7th BC–17th AD'},{k:'UNESCO',v:'1987'}]},
+     rels:[{id:'confucius',type:'同时代',label:'春秋战国时期'}],
+     baidu:'https://baike.baidu.com/item/%E4%B8%87%E9%87%8C%E9%95%BF%E5%9C%8E',wiki:'https://zh.wikipedia.org/wiki/%E4%B8%87%E9%87%8C%E9%95%BF%E5%9F%8E',official:'https://whc.unesco.org/en/list/438'},
+    {cat:'遗迹',id:'forbidden_city',zh:'紫禁城',en:'Forbidden City',era:'1406-1420年',icon:'🏛️',
+     img:'https://images.unsplash.com/photo-1584558612527-b278e81e7c79?w=500&q=75',
+     desc:{zh:'世界最大最完整的木质古建筑群，72万平方米，约9999间房间。明清两朝24位皇帝在此居住，是皇权与礼制的完美具现。',en:'The world largest wooden palace complex — 720,000 m², ~9,999 rooms, home to 24 emperors of the Ming and Qing dynasties.'},
+     facts:{zh:[{k:'面积',v:'72万平方米'},{k:'房间',v:'约9999间'},{k:'建造',v:'1406-1420年'},{k:'皇帝',v:'明清24位'}],
+            en:[{k:'Area',v:'720,000 m²'},{k:'Rooms',v:'~9,999'},{k:'Built',v:'1406–1420'},{k:'Emperors',v:'24'}]},
+     rels:[],
+     baidu:'https://baike.baidu.com/item/%E6%95%85%E5%AE%AB',wiki:'https://zh.wikipedia.org/wiki/%E6%95%85%E5%AE%AB',official:'https://www.dpm.org.cn/'},
+    {cat:'遗迹',id:'terracotta',zh:'秦始皇兵马俑',en:'Terracotta Army',era:'前210年',icon:'⚔️',
+     img:'https://images.unsplash.com/photo-1547981609-4b152b7f4a27?w=500&q=75',
+     desc:{zh:'1974年由陕西农民偶然发现，已出土8000余件形态各异的陶俑。每件兵俑面孔独一无二，被誉为世界第八大奇迹，守护着秦始皇的永恒帝国。',en:'Discovered by farmers in 1974. Over 8,000 unique terracotta soldiers guard China\'s first emperor for eternity.'},
+     facts:{zh:[{k:'发现',v:'1974年3月'},{k:'数量',v:'已出土8000余件'},{k:'目的',v:'守护秦始皇陵'},{k:'UNESCO',v:'1987年'}],
+            en:[{k:'Discovered',v:'March 1974'},{k:'Count',v:'8,000+ figures'},{k:'Purpose',v:'Guard Qin Shi Huang'},{k:'UNESCO',v:'1987'}]},
+     rels:[{id:'confucius',type:'影响',label:'儒家被秦焚书坑儒'}],
+     baidu:'https://baike.baidu.com/item/%E5%85%B5%E9%A9%AC%E4%BF%91',wiki:'https://zh.wikipedia.org/wiki/%E5%85%B5%E9%A9%AC%E4%BF%91',official:'https://www.bmy.com.cn/'},
+    {cat:'历史人物',id:'confucius',zh:'孔子',en:'Confucius',era:'前551-479年',icon:'📜',
+     img:'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=500&q=75',
+     desc:{zh:'中国最伟大的思想家与教育家，儒家创始人。仁义礼智信的道德体系影响东亚文明2500年。弟子整理的《论语》至今仍是人类智慧的瑰宝。',en:'China\'s greatest philosopher and founder of Confucianism. His moral framework of benevolence and righteousness shaped East Asian civilization for 2,500 years.'},
+     facts:{zh:[{k:'生平',v:'前551-479年，鲁国'},{k:'核心思想',v:'仁义礼智信'},{k:'著作',v:'《论语》弟子整理'},{k:'影响',v:'东亚儒学圈2500年'}],
+            en:[{k:'Life',v:'551–479 BC, Lu'},{k:'Core ideas',v:'Ren Yi Li Zhi Xin'},{k:'Text',v:'Analects'},{k:'Influence',v:'2,500+ years'}]},
+     rels:[{id:'socrates',type:'同时代哲人',label:'轴心时代同期'},{id:'buddha',type:'同时代',label:'轴心时代三圣'}],
+     baidu:'https://baike.baidu.com/item/%E5%AD%94%E5%AD%90/1584',wiki:'https://zh.wikipedia.org/wiki/%E5%AD%94%E5%AD%90',official:'https://www.kongfuzi.org/'},
+    {cat:'文物',id:'simuwuding',zh:'后母戊鼎',en:'Houmuwu Ding',era:'前13世纪',icon:'🏺',
+     img:'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&q=75',
+     desc:{zh:'中国最重的青铜器，重达832.84公斤。商王武丁为祭祀母亲而铸，纹饰繁复，工艺精湛，代表商周青铜文明的最高成就。',en:'China\'s heaviest ancient bronze vessel at 832.84 kg, cast by Shang King Wuding to honor his mother. The pinnacle of Bronze Age craftsmanship.'},
+     facts:{zh:[{k:'重量',v:'832.84公斤'},{k:'年代',v:'商代晚期前13世纪'},{k:'材质',v:'青铜'},{k:'现藏',v:'中国国家博物馆'}],
+            en:[{k:'Weight',v:'832.84 kg'},{k:'Period',v:'Late Shang Dynasty'},{k:'Material',v:'Bronze'},{k:'Location',v:'National Museum of China'}]},
+     rels:[],
+     baidu:'https://baike.baidu.com/item/%E5%90%8E%E6%AF%8D%E6%88%8A%E9%BC%8E',wiki:'https://zh.wikipedia.org/wiki/%E5%8F%B8%E6%AF%8D%E6%88%8A%E5%A4%A7%E6%96%B9%E9%BC%8E',official:'http://www.chnmuseum.cn/'},
+,
+    {cat:'历史人物',id:'emperor_wu',zh:'汉武帝',en:'Emperor Wu of Han',era:'前156-87年',icon:'👑',
+     img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=75',
+     desc:{zh:'汉朝第七位皇帝，在位54年，开辟丝绸之路，派张骞出使西域，北击匈奴，奠定中国两千年边疆格局。独尊儒术，确立儒家为官方意识形态。',en:'The 7th Emperor of Han, who reigned 54 years, opened the Silk Road, repelled the Xiongnu, and established Confucianism as state ideology.'},
+     facts:{zh:[{k:'在位',v:'前141-87年，54年'},{k:'重大举措',v:'开辟丝绸之路'},{k:'使者',v:'张骞出使西域前138年'},{k:'思想',v:'独尊儒术'}],
+            en:[{k:'Reign',v:'141–87 BC, 54 years'},{k:'Achievement',v:'Opened Silk Road'},{k:'Envoy',v:'Zhang Qian 138 BC'},{k:'Ideology',v:'Confucianism as state doctrine'}]},
+     rels:[{id:'confucius',type:'尊崇',label:'独尊儒术'}],
+     baidu:'https://baike.baidu.com/item/%E6%B1%89%E6%AD%A6%E5%B8%9D',wiki:'https://zh.wikipedia.org/wiki/%E6%B1%89%E6%AD%A6%E5%B8%9D',official:'https://www.britannica.com/biography/Wudi-emperor-of-Han-dynasty'},
+    {cat:'遗迹',id:'dunhuang',zh:'敦煌莫高窟',en:'Mogao Caves, Dunhuang',era:'366年-1400年',icon:'🏔️',
+     img:'https://images.unsplash.com/photo-1547981609-4b152b7f4a27?w=500&q=75',
+     desc:{zh:'世界上最大的佛教艺术宝库，492个洞窟绵延1680米，涵盖北魏至元代千年壁画与雕塑。1900年发现的藏经洞中封存了5万余件文书。丝绸之路上最重要的文化遗址。',en:"Greatest repository of Buddhist art. 492 caves spanning 1,680m. 50,000 manuscripts discovered in 1900."},
+     facts:{zh:[{k:'洞窟',v:'492个'},{k:'跨度',v:'北魏至元代，千年'},{k:'藏经洞',v:'1900年发现，5万文书'},{k:'UNESCO',v:'1987年'}],
+            en:[{k:'Caves',v:'492'},{k:'Period',v:'Northern Wei to Yuan, 1,000 years'},{k:'Library Cave',v:'50,000 manuscripts 1900'},{k:'UNESCO',v:'1987'}]},
+     rels:[{id:'emperor_wu',type:'开辟',label:'丝路沿线'}],
+     baidu:'https://baike.baidu.com/item/%E8%8E%AB%E9%AB%98%E7%AA%9F',wiki:'https://zh.wikipedia.org/wiki/%E8%8E%AB%E9%AB%98%E7%AA%9F',official:'https://whc.unesco.org/en/list/440'},
+    {cat:'历史人物',id:'wu_zetian',zh:'武则天',en:'Wu Zetian',era:'624-705年',icon:'👑',
+     img:'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=500&q=75',
+     desc:{zh:'中国历史上唯一正式称帝的女性皇帝，统治中国近50年。在位期间重用寒门人才，完善科举制度，拓展版图至中亚。其统治被称为"贞观遗风"，政绩卓越。',en:'The only woman in Chinese history to rule as Emperor in her own right. She reformed the imperial examination system and expanded Tang territory to Central Asia.'},
+     facts:{zh:[{k:'生平',v:'624-705年'},{k:'称帝',v:'690年，建周朝'},{k:'在位',v:'实际约50年'},{k:'陵墓',v:'乾陵，陕西'}],
+            en:[{k:'Life',v:'624–705'},{k:'Emperor',v:'690 AD, Zhou dynasty'},{k:'Reign',v:'~50 years effectively'},{k:'Tomb',v:'Qianling, Shaanxi'}]},
+     rels:[{id:'dunhuang',type:'同时代',label:'唐代佛教繁荣'}],
+     baidu:'https://baike.baidu.com/item/%E6%AD%A6%E5%88%99%E5%A4%A9',wiki:'https://zh.wikipedia.org/wiki/%E6%AD%A6%E5%88%99%E5%A4%A9',official:'https://www.britannica.com/biography/Wu-Hou'},
+    {cat:'历史人物',id:'qin_shi_huang',zh:'秦始皇',en:'Qin Shi Huang',era:'前259-210年',icon:'👑',
+     img:'https://images.unsplash.com/photo-1547981609-4b152b7f4a27?w=500&q=75',
+     desc:{zh:'中国第一位皇帝，统一六国、统一文字货币度量衡，修建万里长城与灵渠。焚书坑儒震惊后世。其陵墓规模浩大，兵马俑守护永恒帝国。历史上最具争议也最具影响力的帝王。',en:'China’s first emperor who unified the warring states, standardized writing, currency and weights. Built the Great Wall. His legacy shapes China to this day.'},
+     facts:{zh:[{k:'生平',v:'前259-210年'},{k:'统一',v:'前221年'},{k:'建设',v:'长城、灵渠、驰道'},{k:'陵墓',v:'骊山，保护区56km²'}],
+            en:[{k:'Life',v:'259–210 BC'},{k:'Unified',v:'221 BC'},{k:'Built',v:'Great Wall, roads, canals'},{k:'Mausoleum',v:'Lishan, 56km² protected'}]},
+     rels:[{id:'terracotta',type:'建造者',label:'兵马俑守护者'},{id:'confucius',type:'焚书',label:'焚书坑儒'}],
+     baidu:'https://baike.baidu.com/item/%E7%A7%A6%E5%A7%8B%E7%9A%87',wiki:'https://zh.wikipedia.org/wiki/%E7%A7%A6%E5%A7%8B%E7%9A%87',official:'https://www.britannica.com/biography/Shihuangdi'},
+    {cat:'遗迹',id:'summer_palace',zh:'颐和园',en:'Summer Palace, Beijing',era:'1750年',icon:'🏯',
+     img:'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=500&q=75',
+     desc:{zh:'清朝皇家园林的巅峰之作，以昆明湖与万寿山为基础，融汇江南园林与北方建筑精华。慈禧太后挪用北洋水师军费重修，成为晚清政治的象征。1998年列入世界遗产。',en:'The pinnacle of Chinese imperial garden design. Empress Dowager Cixi notoriously diverted naval funds to rebuild it. UNESCO World Heritage since 1998.'},
+     facts:{zh:[{k:'建造',v:'1750年，乾隆帝'},{k:'重修',v:'1888年，慈禧太后'},{k:'面积',v:'290公顷'},{k:'UNESCO',v:'1998年'}],
+            en:[{k:'Built',v:'1750, Emperor Qianlong'},{k:'Rebuilt',v:'1888, Empress Cixi'},{k:'Area',v:'290 hectares'},{k:'UNESCO',v:'1998'}]},
+     rels:[{id:'forbidden_city',type:'同朝代',label:'清代皇家建筑'}],
+     baidu:'https://baike.baidu.com/item/%E9%A2%90%E5%92%8C%E5%9B%AD',wiki:'https://zh.wikipedia.org/wiki/%E9%A2%90%E5%92%8C%E5%9B%AD',official:'https://whc.unesco.org/en/list/880'},
+   ],
+   timeline:[
+    {era:'前5000年',label:'新石器时代',items:['simuwuding'],
+     events:[{y:'前5000年',e:'仰韶文化兴起，彩陶出现'},{y:'前3500年',e:'良渚文化，玉器高度发展'},{y:'前2700年',e:'传说黄帝建国，华夏文明起源'}]},
+    {era:'前1600年',label:'商朝',items:['simuwuding','great_wall','confucius'],
+     events:[{y:'前1600年',e:'商朝建立，中国第一个有文字记载的王朝'},{y:'前13世纪',e:'后母戊鼎铸造，青铜铸造登峰造极'},{y:'前1300年',e:'甲骨文成熟，汉字雏形确立'}]},
+    {era:'前551年',label:'春秋战国',items:['confucius','great_wall','qin_shi_huang'],
+     events:[{y:'前551年',e:'孔子诞生，儒学奠基'},{y:'前500年',e:'百家争鸣：老子道家、孙子兵法'},{y:'前475年',e:'战国时代，铁器普及，长城雏形修建'}]},
+    {era:'前221年',label:'秦汉帝国',items:['terracotta','qin_shi_huang','emperor_wu'],
+     events:[{y:'前221年',e:'秦始皇统一六国，建立第一个中央集权帝国'},{y:'前210年',e:'秦始皇陵兵马俑建造完成'},{y:'前138年',e:'汉武帝开辟丝绸之路，连接东西方'}]},
+    {era:'618年',label:'隋唐盛世',items:['dunhuang','wu_zetian','confucius'],
+     events:[{y:'605年',e:'隋炀帝开凿大运河，全长2700公里'},{y:'618年',e:'唐朝建立，长安成为世界最大都市'},{y:'645年',e:'玄奘取经归来，佛经翻译盛行'},{y:'700年',e:'唐诗黄金时代：李白、杜甫'}]},
+    {era:'960年',label:'宋元时代',items:['great_wall','simuwuding','confucius'],
+     events:[{y:'960年',e:'宋朝建立，四大发明（火药印刷指南针造纸）成熟'},{y:'1088年',e:'沈括著《梦溪笔谈》，科学高峰'},{y:'1271年',e:'忽必烈建元朝，马可·波罗来华'}]},
+    {era:'1368年',label:'明清王朝',items:['forbidden_city','great_wall','summer_palace'],
+     events:[{y:'1405年',e:'郑和七下西洋，最大规模远洋航行'},{y:'1406年',e:'紫禁城开始建造，1420年完工'},{y:'1644年',e:'清朝建立，康乾盛世，全球GDP第一'},{y:'1793年',e:'马嘎尔尼访华，东西方文明碰撞'}]},
+   ]},
+
+  {id:'greece',zh:'希腊',en:'Greece',flag:'🇬🇷',lat:39,lon:22,
+   color:{h:210,s:70,l:55},music:'mediterranean',
+   tagline:{zh:'西方文明的摇篮，哲学与民主的发源地',en:'Cradle of Western civilization'},
+   heroImg:'https://images.unsplash.com/photo-1555993539-1732b0258235?w=600&q=80',
+   tooltipImg:'https://images.unsplash.com/photo-1555993539-1732b0258235?w=300&q=70',
+   items:[
+    {cat:'遗迹',id:'acropolis',zh:'雅典卫城',en:'Acropolis of Athens',era:'前5世纪',icon:'🏛️',
+     img:'https://images.unsplash.com/photo-1603565816030-6b389eeb23cb?w=500&q=75',
+     desc:{zh:'帕特农神庙是古希腊建筑巅峰，献给守护神雅典娜。建于民主黄金时代，多立克柱式比例完美，影响西方建筑两千余年。',en:'The Parthenon atop the Acropolis is the pinnacle of ancient Greek architecture, dedicated to Athena and built during the golden age of democracy.'},
+     facts:{zh:[{k:'建造',v:'前447-432年'},{k:'建筑师',v:'伊克提诺斯&卡里克拉特斯'},{k:'神庙',v:'帕特农神庙'},{k:'UNESCO',v:'1987年'}],
+            en:[{k:'Built',v:'447–432 BC'},{k:'Architects',v:'Ictinus & Callicrates'},{k:'Temple',v:'Parthenon'},{k:'UNESCO',v:'1987'}]},
+     rels:[{id:'socrates',type:'同时代',label:'伯里克利时代'}],
+     baidu:'https://baike.baidu.com/item/%E9%9B%85%E5%85%B8%E5%8D%AB%E5%9F%8E',wiki:'https://zh.wikipedia.org/wiki/%E9%9B%85%E5%85%B8%E5%8D%A9%E5%9F%8E',official:'https://www.theacropolismuseum.gr/'},
+    {cat:'历史人物',id:'socrates',zh:'苏格拉底',en:'Socrates',era:'前470-399年',icon:'🧠',
+     img:'https://images.unsplash.com/photo-1618085219724-c59ba48e08cd?w=500&q=75',
+     desc:{zh:'西方哲学奠基人。以辩证法追问真理，以认识自己为人生信条，最终因腐化雅典青年的罪名饮鸩而死，成为思想自由的永恒殉道者。',en:'The founding figure of Western philosophy. His Socratic method of questioning and his maxim \'Know thyself\' shaped all subsequent Western thought.'},
+     facts:{zh:[{k:'生平',v:'前470-399年，雅典'},{k:'方法',v:'苏格拉底式辩证法'},{k:'弟子',v:'柏拉图、色诺芬'},{k:'死亡',v:'饮鸩，前399年'}],
+            en:[{k:'Life',v:'470–399 BC, Athens'},{k:'Method',v:'Socratic dialogue'},{k:'Students',v:'Plato, Xenophon'},{k:'Death',v:'Hemlock, 399 BC'}]},
+     rels:[{id:'confucius',type:'同时代哲人',label:'轴心时代同期'},{id:'alexander',type:'传承',label:'苏格拉底→柏拉图→亚里士多德→亚历山大'},{id:'plato',type:'老师',label:'柏拉图之师'}],
+     baidu:'https://baike.baidu.com/item/%E8%8B%8F%E6%A0%BC%E6%8B%89%E5%BA%95',wiki:'https://zh.wikipedia.org/wiki/%E8%8B%8F%E6%A0%BC%E6%8B%89%E5%BA%95',official:'https://www.britannica.com/biography/Socrates'},
+    {cat:'历史人物',id:'alexander',zh:'亚历山大大帝',en:'Alexander the Great',era:'前356-323年',icon:'⚔️',
+     img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=75',
+     desc:{zh:'马其顿国王，32岁建立横跨三大洲的帝国，将希腊文化传播至中东、中亚、印度，开创希腊化时代。老师是亚里士多德，征服了包括埃及、波斯在内的广大领土。',en:'King of Macedon, who by age 32 had forged an empire spanning three continents, spreading Greek culture from Egypt to India.'},
+     facts:{zh:[{k:'生平',v:'前356-323年，马其顿'},{k:'疆域',v:'约500万平方公里'},{k:'老师',v:'亚里士多德'},{k:'逝世',v:'前323年，巴比伦，32岁'}],
+            en:[{k:'Life',v:'356–323 BC'},{k:'Empire',v:'~5 million km²'},{k:'Teacher',v:'Aristotle'},{k:'Death',v:'323 BC, Babylon, 32'}]},
+     rels:[{id:'socrates',type:'思想传承',label:'亚里士多德之徒'},{id:'cyrus',type:'对手',label:'征服波斯帝国'},{id:'cleopatra',type:'影响',label:'开创希腊化埃及'}],
+     baidu:'https://baike.baidu.com/item/%E4%BA%9A%E5%8E%86%E5%B1%B1%E5%A4%A7',wiki:'https://zh.wikipedia.org/wiki/%E4%BA%9A%E5%8E%86%E5%B1%B1%E5%A4%A7',official:'https://www.britannica.com/biography/Alexander-the-Great'},
+,
+    {cat:'历史人物',id:'plato',zh:'柏拉图',en:'Plato',era:'前428-348年',icon:'🧠',
+     img:'https://images.unsplash.com/photo-1618085219724-c59ba48e08cd?w=500&q=75',
+     desc:{zh:'苏格拉底的学生，亚里士多德的老师，西方哲学最重要的奠基者之一。创建雅典学园，著《理想国》阐述哲人王治国理念。洞穴寓言至今仍是哲学入门必读。',en:'Student of Socrates, teacher of Aristotle. Founded the Academy in Athens. His Republic and the Allegory of the Cave remain essential reading in philosophy.'},
+     facts:{zh:[{k:'生平',v:'前428-348年，雅典'},{k:'老师',v:'苏格拉底'},{k:'学生',v:'亚里士多德'},{k:'代表作',v:'《理想国》《对话录》'}],
+            en:[{k:'Life',v:'428–348 BC, Athens'},{k:'Teacher',v:'Socrates'},{k:'Student',v:'Aristotle'},{k:'Works',v:'Republic, Dialogues'}]},
+     rels:[{id:'socrates',type:'学生',label:'苏格拉底之徒'},{id:'alexander',type:'传承',label:'柏拉图→亚里士多德→亚历山大'}],
+     baidu:'https://baike.baidu.com/item/%E6%9F%8F%E6%8B%89%E5%9B%BE',wiki:'https://zh.wikipedia.org/wiki/%E6%9F%8F%E6%8B%89%E5%9B%BE',official:'https://www.britannica.com/biography/Plato'},
+    {cat:'博物馆',id:'acropolis_museum',zh:'雅典卫城博物馆',en:'Acropolis Museum',era:'2009年',icon:'🏛️',
+     img:'https://images.unsplash.com/photo-1555993539-1732b0258235?w=500&q=75',
+     desc:{zh:'2009年开放，专门收藏帕特农神庙及雅典卫城出土文物。博物馆玻璃地板下可直接看到古代雅典城市遗址。核心馆藏包括厄瑞克忒翁神庙女像柱与帕特农神庙雕塑原件。',en:'Opened 2009, dedicated to the Acropolis finds. A glass floor reveals the ancient Athens ruins beneath. Houses the Erechtheion Caryatids and original Parthenon sculptures.'},
+     facts:{zh:[{k:'开放',v:'2009年'},{k:'馆藏',v:'4000余件'},{k:'特色',v:'玻璃地板下的古城遗址'},{k:'争议',v:'要求归还大英博物馆的帕特农石雕'}],
+            en:[{k:'Opened',v:'2009'},{k:'Collection',v:'4,000+ artifacts'},{k:'Feature',v:'Glass floor over ancient city'},{k:'Dispute',v:'Demands return of Elgin Marbles'}]},
+     rels:[{id:'acropolis',type:'收藏',label:'帕特农神庙文物'}],
+     baidu:'https://baike.baidu.com/item/%E9%9B%85%E5%85%B8%E5%8D%A9%E5%9F%8E%E5%8D%9A%E7%89%A9%E9%A6%86',wiki:'https://zh.wikipedia.org/wiki/%E9%9B%85%E5%85%B8%E5%8D%A9%E5%9F%8E%E5%8D%9A%E7%89%A9%E9%A6%86',official:'https://www.theacropolismuseum.gr/'},
+   ],
+   timeline:[
+    {era:'前800年',label:'古风时代',items:['acropolis','acropolis_museum','plato'],
+     events:[{y:'前800年',e:'荷马史诗《伊利亚特》与《奥德赛》成型'},{y:'前776年',e:'第一届古代奥林匹克运动会举行'},{y:'前750年',e:'城邦国家兴起，雅典斯巴达科林斯形成'}]},
+    {era:'前490年',label:'古典黄金时代',items:['socrates','acropolis','plato'],
+     events:[{y:'前490年',e:'马拉松战役，希腊击败波斯'},{y:'前461年',e:'伯里克利时代，雅典民主黄金期'},{y:'前447年',e:'帕特农神庙开始建造'},{y:'前399年',e:'苏格拉底被判饮鸩而死'}]},
+    {era:'前356年',label:'希腊化时代',items:['alexander','plato','acropolis_museum'],
+     events:[{y:'前356年',e:'亚历山大大帝诞生，师从亚里士多德'},{y:'前334年',e:'亚历山大东征，三年内征服波斯帝国'},{y:'前323年',e:'亚历山大逝世，帝国分裂，希腊文化传遍欧亚'}]},
+   ]},
+
+  {id:'italy',zh:'意大利',en:'Italy',flag:'🇮🇹',lat:42,lon:12,
+   color:{h:15,s:75,l:50},music:'mediterranean',
+   tagline:{zh:'罗马帝国的荣光，文艺复兴的摇篮',en:'Glory of Rome, cradle of the Renaissance'},
+   heroImg:'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&q=80',
+   tooltipImg:'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=300&q=70',
+   items:[
+    {cat:'遗迹',id:'colosseum',zh:'罗马斗兽场',en:'Colosseum',era:'72-80年',icon:'🏛️',
+     img:'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=500&q=75',
+     desc:{zh:'古罗马工程奇迹，可容纳5-8万观众。历经两千年地震与侵略仍屹立不倒，是罗马帝国强盛的永恒象征。',en:'An ancient Roman engineering marvel seating 50,000–80,000 spectators. After 2,000 years it remains a symbol of imperial Rome\'s power.'},
+     facts:{zh:[{k:'建造',v:'72-80年'},{k:'容量',v:'5-8万观众'},{k:'规模',v:'188×156m，高48m'},{k:'UNESCO',v:'1980年'}],
+            en:[{k:'Built',v:'72–80 AD'},{k:'Capacity',v:'50,000–80,000'},{k:'Size',v:'188×156m, 48m'},{k:'UNESCO',v:'1980'}]},
+     rels:[{id:'julius_caesar',type:'历史背景',label:'凯撒后百年建造'}],
+     baidu:'https://baike.baidu.com/item/%E7%BD%97%E9%A9%AC%E6%96%97%E5%85%BD%E5%9C%BA',wiki:'https://zh.wikipedia.org/wiki/%E7%BD%97%E9%A9%AC%E6%96%97%E5%85%BD%E5%9C%BA',official:'https://colosseo.it/'},
+    {cat:'历史人物',id:'julius_caesar',zh:'尤利乌斯·凯撒',en:'Julius Caesar',era:'前100-44年',icon:'⚔️',
+     img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=75',
+     desc:{zh:'罗马共和国最伟大的军事家与政治家，征服高卢，越过卢比孔河开启内战，成为罗马独裁官。前44年3月15日遭元老院刺杀，引发罗马帝国诞生。',en:'Rome\'s greatest general and statesman. His crossing of the Rubicon and subsequent dictatorship led directly to the birth of the Roman Empire.'},
+     facts:{zh:[{k:'生平',v:'前100-44年，罗马'},{k:'征服',v:'高卢战争前58-50年'},{k:'名言',v:'我来我见我征服'},{k:'遇刺',v:'前44年3月15日'}],
+            en:[{k:'Life',v:'100–44 BC'},{k:'Conquest',v:'Gallic Wars 58–50 BC'},{k:'Quote',v:'Veni Vidi Vici'},{k:'Assassinated',v:'Ides of March 44 BC'}]},
+     rels:[{id:'cleopatra',type:'盟友/情人',label:'埃及政治联盟'},{id:'alexander',type:'偶像',label:'凯撒以亚历山大为偶像'}],
+     baidu:'https://baike.baidu.com/item/%E5%B0%A4%E5%88%A9%E4%B9%8C%E6%96%AF%C2%B7%E6%81%BA%E6%92%92',wiki:'https://zh.wikipedia.org/wiki/%E5%B0%A4%E5%88%A9%E4%B9%8C%E6%96%AF%C2%B7%E6%81%BA%E6%92%92',official:'https://www.britannica.com/biography/Julius-Caesar'},
+    {cat:'历史人物',id:'da_vinci',zh:'达·芬奇',en:'Leonardo da Vinci',era:'1452-1519年',icon:'🎨',
+     img:'https://images.unsplash.com/photo-1618085219724-c59ba48e08cd?w=500&q=75',
+     desc:{zh:'文艺复兴最伟大的天才，画家、科学家、发明家的完美集合体。《蒙娜丽莎》与《最后的晚餐》是人类艺术史巅峰。手稿中记录了数百年后才得以实现的飞行器与太阳能设计。',en:'The ultimate Renaissance man — painter, scientist, architect, inventor, centuries ahead of his time. The Mona Lisa and Last Supper are his immortal gifts.'},
+     facts:{zh:[{k:'生平',v:'1452-1519年，佛罗伦萨'},{k:'代表作',v:'蒙娜丽莎、最后的晚餐'},{k:'手稿',v:'约5000页传世'},{k:'赞助人',v:'美第奇家族、斯福尔扎'}],
+            en:[{k:'Life',v:'1452–1519, Florence'},{k:'Works',v:'Mona Lisa, Last Supper'},{k:'Notebooks',v:'~5,000 pages'},{k:'Patrons',v:'Medici, Sforza'}]},
+     rels:[{id:'newton',type:'科学传承',label:'文艺复兴→科学革命'},{id:'shakespeare',type:'同时代',label:'文艺复兴时期'}],
+     baidu:'https://baike.baidu.com/item/%E8%8E%B1%E6%98%82%E7%BA%B3%E5%A4%9A%C2%B7%E8%BE%BE%C2%B7%E8%8A%AC%E5%A5%87',wiki:'https://zh.wikipedia.org/wiki/%E8%8E%B1%E6%98%82%E7%BA%B3%E5%A4%9A%C2%B7%E8%BE%BE%C2%B7%E8%8A%AC%E5%A5%87',official:'https://www.leonardodavinci.net/'},
+    {cat:'博物馆',id:'uffizi',zh:'乌菲兹美术馆',en:'Uffizi Gallery',era:'1581年',icon:'🎨',
+     img:'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=500&q=75',
+     desc:{zh:'世界最重要的文艺复兴艺术博物馆，藏有波提切利《维纳斯的诞生》、达芬奇《天使报喜》等旷世名作，是理解14-17世纪意大利绘画的最佳场所。',en:'The world\'s finest collection of Italian Renaissance art, home to Botticelli\'s Birth of Venus and Leonardo\'s Annunciation.'},
+     facts:{zh:[{k:'地点',v:'佛罗伦萨'},{k:'开放',v:'1581年'},{k:'镇馆',v:'波提切利《维纳斯诞生》'},{k:'馆藏',v:'约6000件'}],
+            en:[{k:'Location',v:'Florence'},{k:'Opened',v:'1581'},{k:'Highlight',v:'Birth of Venus'},{k:'Collection',v:'~6,000 works'}]},
+     rels:[{id:'da_vinci',type:'馆藏',label:'收藏达芬奇真迹'}],
+     baidu:'https://baike.baidu.com/item/%E4%B9%8C%E8%8F%B2%E5%85%B9%E7%BE%8E%E6%9C%AF%E9%A6%86',wiki:'https://zh.wikipedia.org/wiki/%E4%B9%8C%E8%8F%B2%E5%85%B9%E7%BE%8E%E6%9C%AF%E9%A6%86',official:'https://www.uffizi.it/'},
+,
+    {cat:'历史人物',id:'michelangelo',zh:'米开朗基罗',en:'Michelangelo',era:'1475-1564年',icon:'🎨',
+     img:'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=500&q=75',
+     desc:{zh:'文艺复兴三杰之一，雕塑《大卫》《创世纪》西斯廷礼拜堂壁画是人类艺术史巅峰。88岁辞世时仍在工作，一生横跨雕塑、绘画、建筑、诗歌四个领域。',en:'One of the three Renaissance masters. His David, the Pieta, and Sistine Chapel ceiling are pinnacles of human art. He worked until age 88, mastering sculpture, painting, architecture and poetry.'},
+     facts:{zh:[{k:'生平',v:'1475-1564年，卡普雷塞'},{k:'代表作',v:'大卫、西斯廷天顶画'},{k:'大卫',v:'1501-1504年，佛罗伦萨'},{k:'西斯廷',v:'1508-1512年，梵蒂冈'}],
+            en:[{k:'Life',v:'1475–1564, Caprese'},{k:'Masterworks',v:'David, Sistine Chapel'},{k:'David',v:'1501–04, Florence'},{k:'Sistine',v:'1508–12, Vatican'}]},
+     rels:[{id:'da_vinci',type:'同时代',label:'文艺复兴三杰'},{id:'uffizi',type:'馆藏',label:'收藏多件真迹'}],
+     baidu:'https://baike.baidu.com/item/%E7%B1%B3%E5%BC%80%E6%9C%97%E5%9F%BA%E7%BD%97',wiki:'https://zh.wikipedia.org/wiki/%E7%B1%B3%E5%BC%80%E6%9C%97%E5%9F%BA%E7%BD%97',official:'https://www.britannica.com/biography/Michelangelo'},
+    {cat:'遗迹',id:'pompeii',zh:'庞贝古城',en:'Pompeii',era:'前6世纪-79年',icon:'🌋',
+     img:'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=500&q=75',
+     desc:{zh:'公元79年维苏威火山喷发瞬间封存的罗马城市，保存了古罗马日常生活最完整的记录。壁画、面包铺、青楼、斗兽场一应俱全，是时间胶囊式的历史奇迹。',en:'Flash-frozen by Vesuvius in 79 AD, Pompeii is the world’s best-preserved snapshot of Roman daily life — bakeries, brothels, theaters, all suspended in volcanic ash.'},
+     facts:{zh:[{k:'毁灭',v:'79年8月24日'},{k:'火山',v:'维苏威火山'},{k:'发掘',v:'1748年至今'},{k:'UNESCO',v:'1997年'}],
+            en:[{k:'Destroyed',v:'24 August 79 AD'},{k:'Volcano',v:'Mount Vesuvius'},{k:'Excavation',v:'1748 to present'},{k:'UNESCO',v:'1997'}]},
+     rels:[{id:'colosseum',type:'同时代',label:'罗马帝国盛期'}],
+     baidu:'https://baike.baidu.com/item/%E5%BA%9E%E8%B4%9D',wiki:'https://zh.wikipedia.org/wiki/%E5%BA%9E%E8%B4%9D',official:'https://whc.unesco.org/en/list/829'},
+   ],
+   timeline:[
+    {era:'前753年',label:'罗马建城',items:['julius_caesar','colosseum','pompeii'],
+     events:[{y:'前753年',e:'罗慕路斯建立罗马城，开启传奇'},{y:'前509年',e:'罗马共和国建立，元老院制度确立'},{y:'前264年',e:'布匿战争，罗马称霸地中海'}]},
+    {era:'前100年',label:'共和国末期与凯撒',items:['julius_caesar','colosseum','pompeii'],
+     events:[{y:'前100年',e:'凯撒诞生于罗马贵族家庭'},{y:'前58年',e:'凯撒征服高卢，著《高卢战记》'},{y:'前44年',e:'凯撒遭元老院刺杀，引发内战'}]},
+    {era:'72年',label:'罗马帝国盛期',items:['colosseum','pompeii','julius_caesar'],
+     events:[{y:'27年',e:'屋大维成为奥古斯都，罗马帝国开始'},{y:'72年',e:'韦斯巴芗开建斗兽场，80年竣工'},{y:'79年',e:'维苏威火山爆发，庞贝古城被掩埋'}]},
+    {era:'1295年',label:'中世纪与前文艺复兴',items:['pompeii','michelangelo','da_vinci'],
+     events:[{y:'1295年',e:'马可·波罗从中国归来，激发东方热'},{y:'1305年',e:'乔托绘制帕多瓦壁画，透视法雏形'},{y:'1348年',e:'黑死病席卷欧洲，三分之一人口死亡'}]},
+    {era:'1452年',label:'文艺复兴',items:['da_vinci','uffizi','michelangelo'],
+     events:[{y:'1452年',e:'达·芬奇诞生'},{y:'1475年',e:'米开朗基罗诞生，西斯廷礼拜堂壁画'},{y:'1501年',e:'米开朗基罗完成《大卫》'},{y:'1503年',e:'达·芬奇开始创作《蒙娜丽莎》'}]},
+   ]},
+
+  {id:'india',zh:'印度',en:'India',flag:'🇮🇳',lat:20,lon:77,
+   color:{h:25,s:85,l:50},music:'indian',
+   tagline:{zh:'吠陀文明的古老源泉，佛教的诞生之地',en:'Ancient Vedic civilization, birthplace of Buddhism'},
+   heroImg:'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=600&q=80',
+   tooltipImg:'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=300&q=70',
+   items:[
+    {cat:'遗迹',id:'taj_mahal',zh:'泰姬陵',en:'Taj Mahal',era:'1632-1653年',icon:'🕌',
+     img:'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=500&q=75',
+     desc:{zh:'莫卧儿皇帝沙贾汗为悼念爱妻而建，动用2万工匠22年完成。全白大理石建筑完美对称，被誉为永恒的爱之丰碑，是印度伊斯兰建筑的最高成就。',en:'Built by Emperor Shah Jahan to honor his beloved wife Mumtaz Mahal. This white marble masterpiece took 20,000 workers 22 years to complete.'},
+     facts:{zh:[{k:'建造',v:'1632-1653年'},{k:'建造者',v:'沙贾汗'},{k:'材料',v:'白色大理石，28种宝石'},{k:'UNESCO',v:'1983年'}],
+            en:[{k:'Built',v:'1632–1653'},{k:'Builder',v:'Shah Jahan'},{k:'Material',v:'White marble, 28 gemstones'},{k:'UNESCO',v:'1983'}]},
+     rels:[{id:'ashoka',type:'同文明',label:'均为印度伟大建造'}],
+     baidu:'https://baike.baidu.com/item/%E6%B3%B0%E5%A7%AC%E9%99%B5',wiki:'https://zh.wikipedia.org/wiki/%E6%B3%B0%E5%A7%AC%E9%99%B5',official:'https://www.tajmahal.gov.in/'},
+    {cat:'历史人物',id:'buddha',zh:'释迦牟尼',en:'Siddhartha Gautama (Buddha)',era:'前563-483年',icon:'☸️',
+     img:'https://images.unsplash.com/photo-1548013146-72479768bada?w=500&q=75',
+     desc:{zh:'古印度王子，在菩提伽耶菩提树下悟道，创立佛教。四圣谛与八正道为数亿人指引通往解脱的道路，佛教传遍亚洲，影响无数文明。',en:'An Indian prince who attained enlightenment under the Bodhi tree. His Four Noble Truths and Eightfold Path guide over 500 million followers today.'},
+     facts:{zh:[{k:'出生地',v:'迦毗罗卫国今尼泊尔'},{k:'悟道地',v:'菩提伽耶，印度'},{k:'核心教义',v:'四圣谛、八正道'},{k:'信众',v:'全球约5-6亿'}],
+            en:[{k:'Birthplace',v:'Kapilavastu (Nepal)'},{k:'Enlightened',v:'Bodh Gaya, India'},{k:'Teaching',v:'Four Noble Truths'},{k:'Followers',v:'500–600 million'}]},
+     rels:[{id:'confucius',type:'同时代',label:'轴心时代三圣'},{id:'socrates',type:'同时代',label:'轴心时代同期'},{id:'ashoka',type:'传播',label:'阿育王传播佛教'}],
+     baidu:'https://baike.baidu.com/item/%E9%87%8A%E8%BF%A6%E7%89%9F%E5%B0%BC',wiki:'https://zh.wikipedia.org/wiki/%E9%87%8A%E8%BF%A6%E7%89%9F%E5%B0%BC',official:'https://www.britannica.com/biography/Buddha'},
+    {cat:'历史人物',id:'ashoka',zh:'阿育王',en:'Ashoka the Great',era:'前304-232年',icon:'☸️',
+     img:'https://images.unsplash.com/photo-1601479604588-0f6be1a5e7dc?w=500&q=75',
+     desc:{zh:'孔雀王朝第三位国王，卡林加战争后皈依佛教，颁布以非暴力为核心的法敕。广建佛塔，使佛教从地方宗教成为世界性宗教。印度国旗上的法轮源自阿育王柱。',en:'The Mauryan emperor who renounced war after witnessing mass slaughter, embraced Buddhism, and spread it across Asia. The Ashoka Chakra adorns India\'s flag.'},
+     facts:{zh:[{k:'朝代',v:'孔雀王朝'},{k:'转折点',v:'卡林加战争前261年'},{k:'贡献',v:'将佛教传至斯里兰卡、中亚'},{k:'遗产',v:'阿育王柱，法轮在国旗上'}],
+            en:[{k:'Dynasty',v:'Maurya Empire'},{k:'Turning point',v:'Kalinga War c.261 BC'},{k:'Legacy',v:'Spread Buddhism to Sri Lanka'},{k:'Symbol',v:'Ashoka Chakra on flag'}]},
+     rels:[{id:'buddha',type:'信徒',label:'佛教的最大传播者'}],
+     baidu:'https://baike.baidu.com/item/%E9%98%BF%E8%82%B2%E7%8E%8B',wiki:'https://zh.wikipedia.org/wiki/%E9%98%BF%E8%82%B2%E7%8E%8B',official:'https://www.britannica.com/biography/Ashoka'},
+,
+    {cat:'遗迹',id:'taj_mahal2',zh:'阿旃陀石窟',en:'Ajanta Caves',era:'前2世纪-5世纪',icon:'🪨',
+     img:'https://images.unsplash.com/photo-1601479604588-0f6be1a5e7dc?w=500&q=75',
+     desc:{zh:'印度马哈拉施特拉邦的佛教石窟群，共30个，保存世界上最精美的古代印度壁画。公元7世纪后被遗忘，1819年被英国军官偶然发现。被视为"东方的西斯廷礼拜堂"。',en:'30 Buddhist rock-cut caves containing the finest ancient Indian murals. Forgotten after the 7th century, rediscovered by a British officer in 1819. Called the "Sistine Chapel of the East".'},
+     facts:{zh:[{k:'数量',v:'30个洞窟'},{k:'年代',v:'前2世纪至5世纪'},{k:'内容',v:'佛陀本生故事壁画'},{k:'UNESCO',v:'1983年'}],
+            en:[{k:'Caves',v:'30'},{k:'Period',v:'2nd BC to 5th AD'},{k:'Subject',v:'Jataka tales of Buddha'},{k:'UNESCO',v:'1983'}]},
+     rels:[{id:'buddha',type:'主题',label:'佛教艺术'}],
+     baidu:'https://baike.baidu.com/item/%E9%98%BF%E6%97%83%E9%99%80%E7%9F%B3%E7%AA%9F',wiki:'https://zh.wikipedia.org/wiki/%E9%98%BF%E6%97%83%E9%99%80%E7%9F%B3%E7%AA%9F',official:'https://whc.unesco.org/en/list/242'},
+    {cat:'历史人物',id:'gandhi',zh:'圣雄甘地',en:'Mahatma Gandhi',era:'1869-1948年',icon:'✊',
+     img:'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&q=75',
+     desc:{zh:'印度独立运动领袖，非暴力抵抗理论的创始人与实践者。食盐游行（1930年）是殖民地反抗史上最具象征意义的行动。影响了马丁·路德·金、曼德拉等20世纪所有重要抗议运动。',en:'Leader of India’s independence movement. His philosophy of nonviolent resistance influenced Martin Luther King Jr., Nelson Mandela, and every major civil rights movement of the 20th century.'},
+     facts:{zh:[{k:'生平',v:'1869-1948年，博尔本达尔'},{k:'食盐游行',v:'1930年，384公里徒步'},{k:'独立',v:'1947年印度独立'},{k:'遇刺',v:'1948年1月30日'}],
+            en:[{k:'Life',v:'1869–1948'},{k:'Salt March',v:'1930, 384km on foot'},{k:'Independence',v:'India 1947'},{k:'Assassinated',v:'30 Jan 1948'}]},
+     rels:[{id:'ashoka',type:'精神传承',label:'非暴力传统'}],
+     baidu:'https://baike.baidu.com/item/%E5%9C%A3%E9%9B%84%E7%94%98%E5%9C%B0',wiki:'https://zh.wikipedia.org/wiki/%E5%9C%A3%E9%9B%84%E7%94%98%E5%9C%B0',official:'https://www.mkgandhi.org/'},
+   ],
+   timeline:[
+    {era:'前2600年',label:'印度河文明',items:['taj_mahal2','buddha','ashoka'],
+     events:[{y:'-2600',e:'摩亨佐达罗与哈拉帕城市建立，规划超前的排水系统'},{y:'-1900',e:'印度河文明神秘衰落，原因至今未解'},{y:'-1500',e:'吠陀时代开始，梵语和吠陀经典形成'}]},
+    {era:'前563年',label:'轴心时代',items:['buddha','ashoka','taj_mahal2'],
+     events:[{y:'-563',e:'悉达多·乔达摩（佛陀）诞生于迦毗罗卫国'},{y:'-528',e:'佛陀在菩提伽耶菩提树下开悟'},{y:'-500',e:'耆那教兴起，与佛教同期的非暴力传统'}]},
+    {era:'前304年',label:'孔雀王朝',items:['ashoka','buddha','taj_mahal2'],
+     events:[{y:'-321',e:'旃陀罗笈多建立孔雀帝国，统一印度次大陆'},{y:'-261',e:'阿育王卡林加战争后皈依佛教'},{y:'-250',e:'阿育王派遣使者将佛教传至斯里兰卡与中亚'}]},
+    {era:'320年',label:'笈多王朝',items:['taj_mahal'],
+     events:[{y:'320',e:'笈多帝国建立，印度黄金时代'},{y:'476',e:'数学家阿耶波多发现零的概念与十进制'},{y:'600',e:'印度数字系统经阿拉伯传至欧洲，改变人类计算'}]},
+    {era:'1526年',label:'莫卧儿帝国',items:['taj_mahal','gandhi','ashoka'],
+     events:[{y:'1526',e:'巴布尔建立莫卧儿帝国'},{y:'1556',e:'阿克巴大帝推行宗教宽容政策'},{y:'1632',e:'沙贾汗为悼念爱妻开始建造泰姬陵'},{y:'1653',e:'泰姬陵完工，22年2万工匠'}]},
+   ]},
+
+  {id:'japan',zh:'日本',en:'Japan',flag:'🇯🇵',lat:36,lon:138,
+   color:{h:350,s:60,l:60},music:'japanese',
+   tagline:{zh:'菊与刀，极致美学与武士精神',en:'Chrysanthemum and Sword — extreme aesthetics meet warrior spirit'},
+   heroImg:'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=600&q=80',
+   tooltipImg:'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=300&q=70',
+   items:[
+    {cat:'遗迹',id:'kyoto',zh:'京都古建筑群',en:'Historic Kyoto',era:'794-1868年',icon:'⛩️',
+     img:'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=500&q=75',
+     desc:{zh:'日本千年古都，保留17处UNESCO世界遗产，包括金阁寺、银阁寺、伏见稻荷大社。京都是日本传统文化核心，茶道、能乐、花道皆发源于此。',en:'Japan\'s ancient imperial capital for over 1,000 years, with 17 UNESCO World Heritage sites including Kinkaku-ji and Fushimi Inari.'},
+     facts:{zh:[{k:'首都时间',v:'794-1868年'},{k:'UNESCO',v:'17处'},{k:'代表',v:'金阁寺、清水寺'},{k:'列入',v:'1994年'}],
+            en:[{k:'Capital',v:'794–1868'},{k:'UNESCO',v:'17 sites'},{k:'Icons',v:'Kinkaku-ji, Kiyomizu'},{k:'Listed',v:'1994'}]},
+     rels:[{id:'oda_nobunaga',type:'历史',label:'信长控制京都'}],
+     baidu:'https://baike.baidu.com/item/%E4%BA%AC%E9%83%BD',wiki:'https://zh.wikipedia.org/wiki/%E4%BA%AC%E9%83%BD',official:'https://whc.unesco.org/en/list/688'},
+    {cat:'历史人物',id:'oda_nobunaga',zh:'织田信长',en:'Oda Nobunaga',era:'1534-1582年',icon:'⚔️',
+     img:'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=500&q=75',
+     desc:{zh:'日本战国时代最重要统一者，第一位将火枪战术引入日本战场的武将。开创织田-丰臣-德川的统一路线。1582年本能寺之变中被心腹明智光秀背叛。',en:'The revolutionary warlord who began Japan\'s unification, first to use firearms in warfare. His chain of succession led to the Edo period of peace.'},
+     facts:{zh:[{k:'生平',v:'1534-1582年'},{k:'领地',v:'尾张国今爱知县'},{k:'革新',v:'率先大规模使用铁炮'},{k:'死亡',v:'1582年本能寺之变'}],
+            en:[{k:'Life',v:'1534–1582'},{k:'Domain',v:'Owari Province'},{k:'Innovation',v:'First large-scale firearms'},{k:'Death',v:'Honnō-ji Incident 1582'}]},
+     rels:[{id:'kyoto',type:'征服',label:'控制京都政权'}],
+     baidu:'https://baike.baidu.com/item/%E7%BB%87%E7%94%B0%E4%BF%A1%E9%95%BF',wiki:'https://zh.wikipedia.org/wiki/%E7%BB%87%E7%94%B0%E4%BF%A1%E9%95%BF',official:'https://www.britannica.com/biography/Oda-Nobunaga'},
+    {cat:'博物馆',id:'tokyo_national',zh:'东京国立博物馆',en:'Tokyo National Museum',era:'1872年',icon:'🏛️',
+     img:'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=500&q=75',
+     desc:{zh:'日本最古老最丰富的博物馆，收藏超过11万件日本及亚洲文物，包括89件国宝，完整呈现日本文明从绳文时代至近代的演变。',en:'Japan\'s oldest and largest museum, housing 110,000 works including 89 National Treasures spanning the Jōmon period to modernity.'},
+     facts:{zh:[{k:'建立',v:'1872年'},{k:'馆藏',v:'超过11万件'},{k:'国宝',v:'89件'},{k:'地址',v:'东京上野公园'}],
+            en:[{k:'Founded',v:'1872'},{k:'Collection',v:'110,000+'},{k:'Treasures',v:'89 National Treasures'},{k:'Location',v:'Ueno Park, Tokyo'}]},
+     rels:[],
+     baidu:'https://baike.baidu.com/item/%E4%B8%9C%E4%BA%AC%E5%9B%BD%E7%AB%8B%E5%8D%9A%E7%89%A9%E9%A6%86',wiki:'https://zh.wikipedia.org/wiki/%E4%B8%9C%E4%BA%AC%E5%9B%BD%E7%AB%8B%E5%8D%9A%E7%89%A9%E9%A6%86',official:'https://www.tnm.jp/'},
+,
+    {cat:'历史人物',id:'miyamoto_musashi',zh:'宫本武藏',en:'Miyamoto Musashi',era:'1584-1645年',icon:'⚔️',
+     img:'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=500&q=75',
+     desc:{zh:'日本历史上最著名的剑客，一生参与60余场决斗从未败北。晚年著《五轮书》阐述剑道哲学，成为日本战略与哲学经典，至今仍是商界领袖必读书目。',en:'Japan’s most famous swordsman, undefeated in 60+ duels. His Book of Five Rings, written at the end of his life, is still read by business leaders worldwide as a strategy classic.'},
+     facts:{zh:[{k:'生平',v:'1584-1645年'},{k:'决斗',v:'60余场，未曾败北'},{k:'代表作',v:'《五轮书》1645年'},{k:'流派',v:'二天一流，双刀剑法'}],
+            en:[{k:'Life',v:'1584–1645'},{k:'Duels',v:'60+, never defeated'},{k:'Work',v:'Book of Five Rings 1645'},{k:'Style',v:'Niten Ichi-ryū, two swords'}]},
+     rels:[{id:'oda_nobunaga',type:'同时代',label:'战国时代武士'}],
+     baidu:'https://baike.baidu.com/item/%E5%AE%AB%E6%9C%AC%E6%AD%A6%E8%97%8F',wiki:'https://zh.wikipedia.org/wiki/%E5%AE%AB%E6%9C%AC%E6%AD%A6%E8%97%8F',official:'https://www.britannica.com/biography/Miyamoto-Musashi'},
+    {cat:'遗迹',id:'nara_temple',zh:'东大寺·奈良大佛',en:'Todai-ji Temple, Nara',era:'752年',icon:'🛕',
+     img:'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=500&q=75',
+     desc:{zh:'世界现存最大的木造建筑，供奉15米高的卢舍那佛铜像。752年开眼大典吸引亚洲各地僧侣与使节参加，象征日本作为国际佛教中心的地位。奈良是日本第一个固定都城。',en:'World largest wooden building, housing a 15-meter bronze Buddha. Its 752 dedication drew monks from across Asia. Nara was Japan’s first permanent capital.'},
+     facts:{zh:[{k:'建造',v:'728-752年'},{k:'大佛',v:'15米高，铜像约500吨'},{k:'建筑',v:'世界最大木造建筑'},{k:'UNESCO',v:'1998年'}],
+            en:[{k:'Built',v:'728–752'},{k:'Buddha',v:'15m tall, ~500 tons bronze'},{k:'Building',v:'World’s largest wooden structure'},{k:'UNESCO',v:'1998'}]},
+     rels:[{id:'kyoto',type:'同时代',label:'奈良平安时代'}],
+     baidu:'https://baike.baidu.com/item/%E4%B8%9C%E5%A4%A7%E5%AF%BA',wiki:'https://zh.wikipedia.org/wiki/%E4%B8%9C%E5%A4%A7%E5%AF%BA',official:'https://www.todaiji.or.jp/'},
+   ],
+   timeline:[
+    {era:'300年',label:'古坟时代',items:['nara_temple','kyoto','tokyo_national'],
+     events:[{y:'300',e:'古坟时代，巨大前方后圆坟建造，大和政权形成'},{y:'538',e:'百济传入佛教，日本文化转型开始'},{y:'604',e:'圣德太子制定十七条宪法，儒佛思想融入政治'}]},
+    {era:'794年',label:'平安时代',items:['kyoto','nara_temple','tokyo_national'],
+     events:[{y:'794',e:'迁都平安京（京都），开始1074年作为首都'},{y:'1000',e:'紫式部著《源氏物语》，世界最早的长篇小说'},{y:'1185',e:'源平合战，武士阶级崛起，贵族时代终结'}]},
+    {era:'1192年',label:'镰仓幕府',items:['kyoto','miyamoto_musashi','nara_temple'],
+     events:[{y:'1192',e:'源赖朝建立镰仓幕府，武士政权时代开始'},{y:'1274',e:'忽必烈元军两度入侵，神风（台风）击退蒙古'},{y:'1336',e:'足利尊氏建立室町幕府，能剧与茶道兴盛'}]},
+    {era:'1534年',label:'战国时代',items:['oda_nobunaga','miyamoto_musashi','kyoto'],
+     events:[{y:'1534',e:'织田信长诞生'},{y:'1575',e:'长篠之战，信长以铁炮（火枪）阵大破骑兵'},{y:'1582',e:'本能寺之变，信长遭背叛身亡'},{y:'1603',e:'德川家康建立江户幕府，260年和平时代'}]},
+    {era:'1868年',label:'明治维新',items:['tokyo_national','oda_nobunaga','miyamoto_musashi'],
+     events:[{y:'1868',e:'明治维新，推翻幕府，天皇亲政，全面西化'},{y:'1872',e:'东京国立博物馆建立，日本最古老博物馆'},{y:'1905',e:'日俄战争，亚洲国家首次击败欧洲强国'}]},
+   ]},
+
+  {id:'france',zh:'法国',en:'France',flag:'🇫🇷',lat:46,lon:2,
+   color:{h:220,s:60,l:55},music:'european',
+   tagline:{zh:'启蒙运动的光源，艺术与美食之都',en:'Light of the Enlightenment, eternal capital of art'},
+   heroImg:'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80',
+   tooltipImg:'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=300&q=70',
+   items:[
+    {cat:'遗迹',id:'versailles',zh:'凡尔赛宫',en:'Palace of Versailles',era:'1661-1710年',icon:'🏰',
+     img:'https://images.unsplash.com/photo-1591378603223-e15b45a81640?w=500&q=75',
+     desc:{zh:'路易十四的宫廷梦想，镜厅357面镜子反射无数烛光。确立了太阳王的绝对王权，引领18世纪欧洲宫廷文化与巴洛克建筑风格。',en:'The Sun King\'s masterpiece. The Hall of Mirrors with 357 mirrors reflects the glory of absolute monarchy that defined 18th-century Europe.'},
+     facts:{zh:[{k:'建造',v:'1661-1710年'},{k:'镜厅',v:'357面镜子，长73米'},{k:'庭园',v:'约800公顷'},{k:'UNESCO',v:'1979年'}],
+            en:[{k:'Built',v:'1661–1710'},{k:'Hall of Mirrors',v:'357 mirrors, 73m'},{k:'Gardens',v:'800 hectares'},{k:'UNESCO',v:'1979'}]},
+     rels:[{id:'napoleon',type:'历史背景',label:'大革命后拿破仑修缮'}],
+     baidu:'https://baike.baidu.com/item/%E5%87%A1%E5%B0%94%E8%B5%9B%E5%AE%AB',wiki:'https://zh.wikipedia.org/wiki/%E5%87%A1%E5%B0%94%E8%B5%9B%E5%AE%AB',official:'https://en.chateauversailles.fr/'},
+    {cat:'博物馆',id:'louvre',zh:'卢浮宫博物馆',en:'The Louvre',era:'1793年',icon:'🎨',
+     img:'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=500&q=75',
+     desc:{zh:'世界访客最多的博物馆，收藏约35万件艺术品，包括蒙娜丽莎、维纳斯女神像、胜利女神像三件人类艺术史最珍贵作品。',en:'The world\'s most visited museum, home to 350,000 works including the Mona Lisa, Venus de Milo, and Winged Victory.'},
+     facts:{zh:[{k:'三宝',v:'蒙娜丽莎、维纳斯、胜利女神'},{k:'总藏品',v:'约35万件'},{k:'年访客',v:'约900万人次'},{k:'地址',v:'巴黎第一区'}],
+            en:[{k:'Big Three',v:'Mona Lisa, Venus, Winged Victory'},{k:'Collection',v:'~350,000'},{k:'Visitors',v:'~9 million/year'},{k:'Location',v:'Paris 1st'}]},
+     rels:[{id:'napoleon',type:'历史',label:'拿破仑大量充实馆藏'},{id:'da_vinci',type:'馆藏',label:'收藏蒙娜丽莎'}],
+     baidu:'https://baike.baidu.com/item/%E5%8D%A2%E6%B5%AE%E5%AE%AB%E5%8D%9A%E7%89%A9%E9%A6%86',wiki:'https://zh.wikipedia.org/wiki/%E5%8D%A2%E6%B5%AE%E5%AE%AB%E5%8D%9A%E7%89%A9%E9%A6%86',official:'https://www.louvre.fr/'},
+    {cat:'历史人物',id:'napoleon',zh:'拿破仑·波拿巴',en:'Napoleon Bonaparte',era:'1769-1821年',icon:'⚔️',
+     img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=75',
+     desc:{zh:'从科西嘉普通家庭崛起，26岁成为法国最高统帅，30岁加冕皇帝。重塑欧洲政治版图，《拿破仑法典》至今影响法国与世界法律体系。',en:'Rising from Corsican obscurity to crown himself Emperor of France, Napoleon reshaped Europe. His Civil Code still influences legal systems worldwide.'},
+     facts:{zh:[{k:'生平',v:'1769-1821年'},{k:'巅峰',v:'统治约5500万欧洲人'},{k:'法律',v:'《拿破仑法典》1804年'},{k:'流放',v:'圣赫勒拿岛'}],
+            en:[{k:'Life',v:'1769–1821'},{k:'Peak',v:'55 million Europeans'},{k:'Code',v:'Napoleonic Code 1804'},{k:'Exile',v:'St. Helena'}]},
+     rels:[{id:'alexander',type:'偶像',label:'以亚历山大为偶像'}],
+     baidu:'https://baike.baidu.com/item/%E6%8B%BF%E7%A0%B4%E4%BB%91',wiki:'https://zh.wikipedia.org/wiki/%E6%8B%BF%E7%A0%B4%E4%BB%91%E4%B8%80%E4%B8%96',official:'https://www.napoleon.org/'},
+,
+    {cat:'历史人物',id:'voltaire',zh:'伏尔泰',en:'Voltaire',era:'1694-1778年',icon:'📜',
+     img:'https://images.unsplash.com/photo-1618085219724-c59ba48e08cd?w=500&q=75',
+     desc:{zh:'法国启蒙运动核心人物，以犀利的笔锋抨击宗教专制与社会不公。《哲学辞典》与《老实人》影响了整个欧洲知识阶层，直接推动了法国大革命的思想准备。',en:'The defining voice of the French Enlightenment. His biting wit attacked religious intolerance and despotism. His Candide and Philosophical Dictionary prepared the intellectual ground for the Revolution.'},
+     facts:{zh:[{k:'生平',v:'1694-1778年，巴黎'},{k:'代表作',v:'《老实人》《哲学辞典》'},{k:'信条',v:'我不同意你的观点，但誓死捍卫你说话的权利'},{k:'影响',v:'启蒙运动核心人物'}],
+            en:[{k:'Life',v:'1694–1778, Paris'},{k:'Works',v:'Candide, Philosophical Dictionary'},{k:'Quote',v:'I disapprove, but defend your right to say it'},{k:'Legacy',v:'Core of the Enlightenment'}]},
+     rels:[{id:'napoleon',type:'启蒙影响',label:'大革命思想基础'}],
+     baidu:'https://baike.baidu.com/item/%E4%BC%8F%E5%B0%94%E6%B3%B0',wiki:'https://zh.wikipedia.org/wiki/%E4%BC%8F%E5%B0%94%E6%B3%B0',official:'https://www.britannica.com/biography/Voltaire'},
+    {cat:'遗迹',id:'notre_dame',zh:'巴黎圣母院',en:'Notre-Dame de Paris',era:'1163-1345年',icon:'⛪',
+     img:'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=500&q=75',
+     desc:{zh:'哥特式建筑的经典代表，历时182年建造完成。维克多·雨果《巴黎圣母院》使其名扬天下。2019年大火震惊世界，正在修复重建中，预计2024年重开。',en:'The definitive Gothic cathedral, built over 182 years. Victor Hugo’s novel made it world-famous. The 2019 fire shocked the world; it reopened in December 2024 after restoration.'},
+     facts:{zh:[{k:'建造',v:'1163-1345年，历182年'},{k:'火灾',v:'2019年4月15日'},{k:'重开',v:'2024年12月'},{k:'位置',v:'巴黎西岱岛'}],
+            en:[{k:'Built',v:'1163–1345, 182 years'},{k:'Fire',v:'15 April 2019'},{k:'Reopened',v:'December 2024'},{k:'Location',v:'Île de la Cité, Paris'}]},
+     rels:[{id:'louvre',type:'同城',label:'巴黎历史中心'}],
+     baidu:'https://baike.baidu.com/item/%E5%B7%B4%E9%BB%8E%E5%9C%A3%E6%AF%8D%E9%99%A2',wiki:'https://zh.wikipedia.org/wiki/%E5%B7%B4%E9%BB%8E%E5%9C%A3%E6%AF%8D%E9%99%A2',official:'https://www.notredamedeparis.fr/'},
+   ],
+   timeline:[
+    {era:'1661年',label:'太阳王时代',items:['versailles','voltaire','notre_dame']},
+    {era:'1769年',label:'启蒙与革命',items:['napoleon','louvre','voltaire']},
+   ]},
+
+  {id:'uk',zh:'英国',en:'United Kingdom',flag:'🇬🇧',lat:54,lon:-2,
+   color:{h:215,s:65,l:50},music:'european',
+   tagline:{zh:'工业革命与现代科学的发源地',en:'Birthplace of the Industrial Revolution and modern science'},
+   heroImg:'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&q=80',
+   tooltipImg:'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=300&q=70',
+   items:[
+    {cat:'遗迹',id:'stonehenge',zh:'巨石阵',en:'Stonehenge',era:'前3000-1500年',icon:'🪨',
+     img:'https://images.unsplash.com/photo-1599833975787-5c143f373c30?w=500&q=75',
+     desc:{zh:'史前最神秘的巨石建筑，巨石来自200公里外的威尔士，每块重达25吨。每年夏至日出方向与主轴完美对齐，显示其与天文观测密切相关。',en:'Prehistoric\'s most enigmatic monument. Stones from 200 km away, each weighing 25 tons. The sunrise aligns perfectly with the main axis each summer solstice.'},
+     facts:{zh:[{k:'建造',v:'约前3000-1500年'},{k:'主石重量',v:'约25吨'},{k:'石材来源',v:'威尔士，200公里外'},{k:'UNESCO',v:'1986年'}],
+            en:[{k:'Built',v:'c.3000–1500 BC'},{k:'Stone weight',v:'~25 tons'},{k:'Source',v:'Preseli Hills, Wales'},{k:'UNESCO',v:'1986'}]},
+     rels:[],
+     baidu:'https://baike.baidu.com/item/%E5%B7%A8%E7%9F%B3%E9%98%B5',wiki:'https://zh.wikipedia.org/wiki/%E5%B7%A8%E7%9F%B3%E9%98%B5',official:'https://www.english-heritage.org.uk/visit/places/stonehenge/'},
+    {cat:'博物馆',id:'british_museum',zh:'大英博物馆',en:'The British Museum',era:'1753年',icon:'🏛️',
+     img:'https://images.unsplash.com/photo-1526129318478-62ed807ebdf9?w=500&q=75',
+     desc:{zh:'世界最重要的博物馆之一，收藏超过800万件来自全球各文明的文物，包括罗塞塔石碑、帕特农神庙大理石雕，是理解人类全球文明最完整的单一空间。',en:'One of the world\'s greatest repositories of human civilization, with 8 million objects including the Rosetta Stone and Elgin Marbles.'},
+     facts:{zh:[{k:'建立',v:'1753年'},{k:'藏品',v:'超过800万件'},{k:'镇馆',v:'罗塞塔石碑前196年'},{k:'地址',v:'伦敦布卢姆斯伯里'}],
+            en:[{k:'Founded',v:'1753'},{k:'Collection',v:'8 million+'},{k:'Highlight',v:'Rosetta Stone 196 BC'},{k:'Location',v:'Bloomsbury, London'}]},
+     rels:[],
+     baidu:'https://baike.baidu.com/item/%E5%A4%A7%E8%8B%B1%E5%8D%9A%E7%89%A9%E9%A6%86',wiki:'https://zh.wikipedia.org/wiki/%E5%A4%A7%E8%8B%B1%E5%8D%9A%E7%89%A9%E9%A6%86',official:'https://www.britishmuseum.org/'},
+    {cat:'历史人物',id:'newton',zh:'艾萨克·牛顿',en:'Isaac Newton',era:'1643-1727年',icon:'🍎',
+     img:'https://images.unsplash.com/photo-1507413245164-6160d8298b31?w=500&q=75',
+     desc:{zh:'人类历史上最伟大的科学家之一，发现万有引力、创立微积分、提出经典力学三大定律。《自然哲学的数学原理》开创科学革命，奠定250年物理学基础。',en:'Perhaps history\'s greatest scientist. Discovered gravity, invented calculus, and formulated the three laws of motion that underpinned physics for 250 years.'},
+     facts:{zh:[{k:'生平',v:'1643-1727年，林肯郡'},{k:'贡献',v:'万有引力、微积分、光学'},{k:'著作',v:'《自然哲学数学原理》1687年'},{k:'地位',v:'皇家学会主席，封爵'}],
+            en:[{k:'Life',v:'1643–1727'},{k:'Contributions',v:'Gravity, calculus, optics'},{k:'Work',v:'Principia 1687'},{k:'Status',v:'President of Royal Society'}]},
+     rels:[{id:'da_vinci',type:'科学传承',label:'文艺复兴→科学革命'},{id:'shakespeare',type:'同时代',label:'均为英国文明巨人'}],
+     baidu:'https://baike.baidu.com/item/%E8%89%BE%E8%90%A8%E5%85%8B%C2%B7%E7%89%9F%E9%A1%BF',wiki:'https://zh.wikipedia.org/wiki/%E8%89%BE%E8%90%A8%E5%85%8B%C2%B7%E7%89%9B%E9%A1%BF',official:'https://www.britannica.com/biography/Isaac-Newton'},
+    {cat:'历史人物',id:'shakespeare',zh:'威廉·莎士比亚',en:'William Shakespeare',era:'1564-1616年',icon:'📜',
+     img:'https://images.unsplash.com/photo-1618085219724-c59ba48e08cd?w=500&q=75',
+     desc:{zh:'英语文学史上最伟大的作家，37部戏剧与154首十四行诗定义英语文学表达。哈姆雷特、李尔王、麦克白是人类戏剧艺术的永恒高峰，发明了约1700个英语新词。',en:'The greatest writer in the English language. His 37 plays and 154 sonnets define literary expression, and he coined ~1,700 new English words.'},
+     facts:{zh:[{k:'生平',v:'1564-1616年，斯特拉特福'},{k:'剧作',v:'37部戏剧'},{k:'发明词汇',v:'约1700个英语新词'},{k:'剧场',v:'环球剧场，伦敦'}],
+            en:[{k:'Life',v:'1564–1616'},{k:'Plays',v:'37'},{k:'Words coined',v:'~1,700'},{k:'Theatre',v:'The Globe, London'}]},
+     rels:[{id:'da_vinci',type:'同时代',label:'文艺复兴巨匠'},{id:'newton',type:'同时代',label:'英国文化黄金时代'}],
+     baidu:'https://baike.baidu.com/item/%E5%A8%81%E5%BB%89%C2%B7%E8%8E%8E%E5%A3%AB%E6%AF%94%E4%BA%9A',wiki:'https://zh.wikipedia.org/wiki/%E5%A8%81%E5%BB%89%C2%B7%E8%8E%8E%E5%A3%AB%E6%AF%94%E4%BA%9A',official:'https://www.shakespeare.org.uk/'},
+,
+    {cat:'历史人物',id:'darwin',zh:'查尔斯·达尔文',en:'Charles Darwin',era:'1809-1882年',icon:'🔬',
+     img:'https://images.unsplash.com/photo-1507413245164-6160d8298b31?w=500&q=75',
+     desc:{zh:'《物种起源》作者，进化论的奠基者。1831-1836年随"小猎犬号"环球航行，在加拉帕戈斯群岛观察到物种分化现象，改变了人类对自身起源的认知，是科学史上最具影响力的革命之一。',en:'Author of On the Origin of Species, father of evolutionary theory. His 5-year voyage on the Beagle, observing Galápagos finches, sparked one of history’s greatest scientific revolutions.'},
+     facts:{zh:[{k:'生平',v:'1809-1882年，什鲁斯伯里'},{k:'航行',v:'1831-1836年，小猎犬号'},{k:'著作',v:'《物种起源》1859年'},{k:'安葬',v:'威斯敏斯特大教堂'}],
+            en:[{k:'Life',v:'1809–1882'},{k:'Voyage',v:'1831–36, HMS Beagle'},{k:'Work',v:'On the Origin of Species 1859'},{k:'Buried',v:'Westminster Abbey'}]},
+     rels:[{id:'newton',type:'科学传承',label:'英国科学传统'}],
+     baidu:'https://baike.baidu.com/item/%E6%9F%A5%E5%B0%94%E6%96%AF%C2%B7%E8%BE%BE%E5%B0%94%E6%96%87',wiki:'https://zh.wikipedia.org/wiki/%E6%9F%A5%E5%B0%94%E6%96%AF%C2%B7%E8%BE%BE%E5%B0%94%E6%96%87',official:'https://www.nhm.ac.uk/discover/darwin-and-natural-selection.html'},
+   ],
+   timeline:[
+    {era:'前3000年',label:'史前与罗马时代',items:['stonehenge','british_museum','shakespeare'],
+     events:[{y:'-3000',e:'巨石阵开始建造，历时1500年完成'},{y:'-43',e:'罗马皇帝克劳狄乌斯征服不列颠，建立罗马省份'},{y:'410',e:'罗马军团撤出不列颠，黑暗时代开始'}]},
+    {era:'1066年',label:'中世纪',items:['british_museum'],
+     events:[{y:'1066',e:'诺曼征服，威廉一世加冕英格兰国王'},{y:'1215',e:'约翰王签署《大宪章》，现代宪政基础'},{y:'1348',e:'黑死病席卷英格兰，三分之一人口死亡'}]},
+    {era:'1564年',label:'文艺复兴与莎士比亚',items:['shakespeare','newton','darwin'],
+     events:[{y:'1564',e:'莎士比亚诞生于斯特拉特福'},{y:'1588',e:'英格兰击败西班牙无敌舰队，海上霸权确立'},{y:'1600',e:'东印度公司成立，大英帝国扩张序幕'}]},
+    {era:'1643年',label:'科学革命',items:['newton','british_museum','darwin'],
+     events:[{y:'1643',e:'牛顿诞生于林肯郡'},{y:'1687',e:'牛顿发表《自然哲学的数学原理》'},{y:'1753',e:'大英博物馆建立，世界第一个公共博物馆'},{y:'1769',e:'瓦特改良蒸汽机，工业革命开始'}]},
+   ]},
+
+  {id:'iran',zh:'伊朗',en:'Iran (Persia)',flag:'🇮🇷',lat:32,lon:53,
+   color:{h:28,s:75,l:48},music:'middle_east',
+   tagline:{zh:'波斯帝国的荣光，诗歌与哲学的故乡',en:'Glory of the Persian Empire, homeland of poetry and philosophy'},
+   heroImg:'https://images.unsplash.com/photo-1527838832700-5059252407fa?w=600&q=80',
+   tooltipImg:'https://images.unsplash.com/photo-1527838832700-5059252407fa?w=300&q=70',
+   items:[
+    {cat:'遗迹',id:'persepolis',zh:'波斯波利斯',en:'Persepolis',era:'前518-330年',icon:'🏛️',
+     img:'https://images.unsplash.com/photo-1578321272176-b7bbc0679853?w=500&q=75',
+     desc:{zh:'阿契美尼德波斯帝国礼仪首都，大流士一世始建。万国之门、百柱大厅雄伟壮观。前330年被亚历山大大帝付之一炬，成为文明毁于战争的千古遗憾。',en:'The ceremonial capital of the Achaemenid Empire built by Darius I. Burned by Alexander the Great in 330 BC — a tragic reminder of how war destroys civilization.'},
+     facts:{zh:[{k:'建造',v:'约前518-465年'},{k:'建造者',v:'大流士一世&薛西斯一世'},{k:'毁于',v:'前330年，亚历山大大帝'},{k:'UNESCO',v:'1979年'}],
+            en:[{k:'Built',v:'c.518–465 BC'},{k:'Builder',v:'Darius I & Xerxes I'},{k:'Burned',v:'330 BC, Alexander'},{k:'UNESCO',v:'1979'}]},
+     rels:[{id:'cyrus',type:'同朝代',label:'阿契美尼德王朝'},{id:'alexander',type:'征服',label:'亚历山大焚毁波斯波利斯'}],
+     baidu:'https://baike.baidu.com/item/%E6%B3%A2%E6%96%AF%E6%B3%A2%E5%88%A9%E6%96%AF',wiki:'https://zh.wikipedia.org/wiki/%E6%B3%A2%E6%96%AF%E6%B3%A2%E5%88%A9%E6%96%AF',official:'https://whc.unesco.org/en/list/114'},
+    {cat:'历史人物',id:'cyrus',zh:'居鲁士大帝',en:'Cyrus the Great',era:'前600-530年',icon:'👑',
+     img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=75',
+     desc:{zh:'阿契美尼德波斯帝国创立者，颁布《居鲁士圆柱》——人类历史上第一份人权宣言，允许被征服民族保留宗教与习俗，释放了被巴比伦囚禁的犹太人。',en:'Founder of the Achaemenid Empire, who issued the Cyrus Cylinder — widely considered history\'s first human rights charter. He freed the Jews from Babylonian captivity.'},
+     facts:{zh:[{k:'生平',v:'约前600-530年'},{k:'疆域',v:'爱琴海至印度河'},{k:'人权',v:'《居鲁士圆柱》大英博物馆'},{k:'称号',v:'被犹太人希腊人尊为大帝'}],
+            en:[{k:'Life',v:'c.600–530 BC'},{k:'Empire',v:'Aegean to Indus'},{k:'Charter',v:'Cyrus Cylinder, British Museum'},{k:'Title',v:'Great — by Jews & Greeks'}]},
+     rels:[{id:'alexander',type:'被征服',label:'大流士三世被亚历山大击败'},{id:'nebuchadnezzar',type:'对手',label:'波斯推翻巴比伦'}],
+     baidu:'https://baike.baidu.com/item/%E5%B1%85%E9%B2%81%E5%A3%AB%E5%A4%A7%E5%B8%9D',wiki:'https://zh.wikipedia.org/wiki/%E5%B1%85%E9%B2%81%E5%A3%AB%E5%A4%A7%E5%B5%84',official:'https://www.britannica.com/biography/Cyrus-the-Great'},
+,
+    {cat:'历史人物',id:'xerxes',zh:'薛西斯一世',en:'Xerxes I',era:'前519-465年',icon:'👑',
+     img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=75',
+     desc:{zh:'阿契美尼德波斯帝国最强盛时期的君主，率领百万大军西征希腊，留下温泉关之战的传说。完成父亲大流士未竟的波斯波利斯建设，下令建造万国门。',en:'At the height of Persian power, he led the massive invasion of Greece, immortalized at Thermopylae. Completed the construction of Persepolis and its Gate of All Nations.'},
+     facts:{zh:[{k:'生平',v:'前519-465年'},{k:'西征',v:'前480年，温泉关之战'},{k:'建造',v:'万国门，百柱大厅'},{k:'遇刺',v:'前465年，宫廷政变'}],
+            en:[{k:'Life',v:'519–465 BC'},{k:'Invasion',v:'480 BC, Thermopylae'},{k:'Built',v:'Gate of All Nations'},{k:'Death',v:'465 BC, court conspiracy'}]},
+     rels:[{id:'persepolis',type:'建造者',label:'完成波斯波利斯'},{id:'cyrus',type:'后代',label:'居鲁士之孙'}],
+     baidu:'https://baike.baidu.com/item/%E8%96%9B%E8%A5%BF%E6%96%AF%E4%B8%80%E4%B8%96',wiki:'https://zh.wikipedia.org/wiki/%E8%96%9B%E8%A5%BF%E6%96%AF%E4%B8%80%E4%B8%96',official:'https://www.britannica.com/biography/Xerxes-I'},
+    {cat:'历史人物',id:'rumi',zh:'鲁米',en:'Jalal ad-Din Rumi',era:'1207-1273年',icon:'📜',
+     img:'https://images.unsplash.com/photo-1618085219724-c59ba48e08cd?w=500&q=75',
+     desc:{zh:'波斯最伟大的神秘主义诗人，苏菲派精神领袖。《玛斯纳维》六卷25000余行诗歌被誉为波斯语《古兰经》。其旋转舞蹈（托钵僧之舞）象征灵魂与神的合一。作品至今仍是全球最畅销诗集。',en:'The greatest Persian mystical poet. His Masnavi is called the Persian Quran. His whirling dervish dance symbolizes the soul’s union with the divine. Still the world’s best-selling poet.'},
+     facts:{zh:[{k:'生平',v:'1207-1273年，科尼亚'},{k:'代表作',v:'《玛斯纳维》6卷25000行'},{k:'创立',v:'旋转托钵僧教团'},{k:'影响',v:'全球最畅销诗人之一'}],
+            en:[{k:'Life',v:'1207–1273, Konya'},{k:'Work',v:'Masnavi, 6 vols 25,000 lines'},{k:'Founded',v:'Whirling Dervish order'},{k:'Legacy',v:'World’s best-selling poet'}]},
+     rels:[{id:'cyrus',type:'同文明',label:'波斯文化传承'}],
+     baidu:'https://baike.baidu.com/item/%E9%B2%81%E7%B1%B3',wiki:'https://zh.wikipedia.org/wiki/%E8%B4%BE%E6%8B%89%E5%8D%A1%E5%A1%94%E4%B8%81%C2%B7%E9%B2%81%E7%B1%B3',official:'https://www.britannica.com/biography/Jalal-ad-Din-ar-Rumi'},
+    {cat:'历史人物',id:'avicenna',zh:'阿维森纳',en:'Ibn Sina (Avicenna)',era:'980-1037年',icon:'📜',
+     img:'https://images.unsplash.com/photo-1507413245164-6160d8298b31?w=500&q=75',
+     desc:{zh:'波斯最伟大的哲学家与医学家，被称为"医学之父"。《医典》系统总结伊斯兰世界医学成就，在欧洲大学作为教科书使用600年。哲学上是亚里士多德传统的重要传承者。',en:'The "Father of Medicine" — his Canon of Medicine was a standard university textbook in Europe for 600 years. A pivotal bridge between Greek philosophy and the Islamic Golden Age.'},
+     facts:{zh:[{k:'生平',v:'980-1037年，布哈拉'},{k:'代表作',v:'《医典》《治愈之书》'},{k:'影响',v:'欧洲医学教材600年'},{k:'称号',v:'西方称为Avicenna'}],
+            en:[{k:'Life',v:'980–1037, Bukhara'},{k:'Works',v:'Canon of Medicine, Book of Healing'},{k:'Impact',v:'European medicine 600 years'},{k:'Name',v:'Avicenna in the West'}]},
+     rels:[{id:'rumi',type:'同文明',label:'伊斯兰黄金时代'}],
+     baidu:'https://baike.baidu.com/item/%E4%BC%8A%E6%9C%AC%C2%B7%E8%A5%BF%E9%82%A3',wiki:'https://zh.wikipedia.org/wiki/%E4%BC%8A%E6%9C%AC%C2%B7%E8%A5%BF%E9%82%A3',official:'https://www.britannica.com/biography/Avicenna'},
+    {cat:'遗迹',id:'isfahan',zh:'伊斯法罕皇家广场',en:'Naghsh-e Jahan Square, Isfahan',era:'1598年',icon:'🕌',
+     img:'https://images.unsplash.com/photo-1527838832700-5059252407fa?w=500&q=75',
+     desc:{zh:'萨法维王朝阿巴斯大帝建造，世界第二大广场。四周环绕伊玛目清真寺、阿里卡普宫、谢赫洛特夫拉清真寺，是伊斯兰建筑的巅峰代表。波斯语谚语"伊斯法罕是世界之半"由此而来。',en:'Built by Shah Abbas I. The world’s second largest square, surrounded by the Imam Mosque, Ali Qapu Palace and Sheikh Lotfollah Mosque — the zenith of Islamic architecture.'},
+     facts:{zh:[{k:'建造',v:'1598-1629年'},{k:'面积',v:'89750平方米'},{k:'别称',v:'世界之半'},{k:'UNESCO',v:'1979年'}],
+            en:[{k:'Built',v:'1598–1629'},{k:'Area',v:'89,750 m²'},{k:'Nickname',v:'Half the World'},{k:'UNESCO',v:'1979'}]},
+     rels:[{id:'persepolis',type:'同国',label:'波斯建筑精华'}],
+     baidu:'https://baike.baidu.com/item/%E4%BC%8A%E6%96%AF%E6%B3%95%E7%BD%95',wiki:'https://zh.wikipedia.org/wiki/%E4%BC%8A%E6%96%AF%E6%B3%95%E7%BD%95',official:'https://whc.unesco.org/en/list/115'},
+   ],
+   timeline:[
+    {era:'前600年',label:'阿契美尼德王朝',items:['cyrus','persepolis','xerxes'],
+     events:[{y:'-600',e:'居鲁士大帝建立波斯帝国，疆域从爱琴海延伸至印度河'},{y:'-518',e:'大流士一世建造波斯波利斯，帝国礼仪首都'},{y:'-480',e:'薛西斯一世率百万大军西征希腊，史上最大远征'},{y:'-330',e:'亚历山大大帝焚毁波斯波利斯，阿契美尼德王朝终结'}]},
+    {era:'224年',label:'萨珊帝国',items:['persepolis','avicenna','rumi'],
+     events:[{y:'224',e:'阿尔达希尔一世建立萨珊帝国，波斯文明复兴'},{y:'260',e:'沙普尔一世俘虏罗马皇帝瓦勒良，史无前例'},{y:'400',e:'琐罗亚斯德教鼎盛期，圣火神庙遍布波斯'},{y:'637',e:'伊斯兰军队击败萨珊，波斯开始伊斯兰化'}]},
+    {era:'1000年',label:'伊斯兰黄金时代',items:['avicenna','rumi','isfahan'],
+     events:[{y:'980',e:'阿维森纳（伊本·西那）诞生，医学百科全书作者'},{y:'1048',e:'奥马尔·海亚姆诞生，《鲁拜集》诗人兼数学家'},{y:'1207',e:'鲁米诞生，波斯神秘主义诗歌巅峰'}]},
+    {era:'1501年',label:'萨法维王朝',items:['isfahan','rumi','persepolis'],
+     events:[{y:'1501',e:'萨法维王朝建立，什叶派伊斯兰教成国教'},{y:'1597',e:'阿巴斯大帝迁都伊斯法罕，城市规划黄金时代'},{y:'1722',e:'阿富汗人入侵，萨法维王朝覆灭'}]},
+   ]},
+
+  {id:'iraq',zh:'伊拉克',en:'Iraq (Mesopotamia)',flag:'🇮🇶',lat:33,lon:44,
+   color:{h:45,s:70,l:45},music:'middle_east',
+   tagline:{zh:'两河流域，人类文明的第一道曙光',en:'Land between two rivers, where human civilization first dawned'},
+   heroImg:'https://images.unsplash.com/photo-1597149908779-c6c3bbd83ee5?w=600&q=80',
+   tooltipImg:'https://images.unsplash.com/photo-1597149908779-c6c3bbd83ee5?w=300&q=70',
+   items:[
+    {cat:'文物',id:'hammurabi',zh:'汉谟拉比法典',en:'Code of Hammurabi',era:'前1754年',icon:'📜',
+     img:'https://images.unsplash.com/photo-1578321272176-b7bbc0679853?w=500&q=75',
+     desc:{zh:'现存最完整的古代法律文书，刻在2.25米高黑色闪长岩石柱上，共282条法律。以眼还眼以牙还牙的同态复仇原则由此而来。现藏巴黎卢浮宫。',en:'The world\'s most complete ancient legal code, inscribed on a 2.25m black diorite stele. Its principle of lex talionis (an eye for an eye) echoes through history.'},
+     facts:{zh:[{k:'年代',v:'约前1754年'},{k:'材质',v:'黑色闪长岩2.25米'},{k:'条文',v:'282条'},{k:'现藏',v:'巴黎卢浮宫'}],
+            en:[{k:'Date',v:'c.1754 BC'},{k:'Material',v:'Black diorite 2.25m'},{k:'Laws',v:'282 provisions'},{k:'Location',v:'Louvre, Paris'}]},
+     rels:[{id:'nebuchadnezzar',type:'同文明',label:'巴比伦文明传承'}],
+     baidu:'https://baike.baidu.com/item/%E6%B1%89%E8%B0%9F%E6%8B%89%E6%AF%94%E6%B3%95%E5%85%B8',wiki:'https://zh.wikipedia.org/wiki/%E6%B1%89%E8%B0%9F%E6%8B%89%E6%AF%94%E6%B3%95%E5%85%B8',official:'https://www.louvre.fr/'},
+    {cat:'历史人物',id:'nebuchadnezzar',zh:'尼布甲尼撒二世',en:'Nebuchadnezzar II',era:'前634-562年',icon:'👑',
+     img:'https://images.unsplash.com/photo-1584714268709-c3dd9c92b378?w=500&q=75',
+     desc:{zh:'新巴比伦王国最伟大的国王，建造世界七大奇迹之一的空中花园，攻陷耶路撒冷毁灭所罗门圣殿，将犹太人流放巴比伦，史称巴比伦之囚，对犹太教与基督教历史影响深远。',en:'The greatest king of the Neo-Babylonian Empire, builder of the Hanging Gardens. His destruction of Jerusalem and the Babylonian Captivity shaped Jewish and Christian history.'},
+     facts:{zh:[{k:'生平',v:'约前634-562年'},{k:'在位',v:'前605-562年'},{k:'建造',v:'巴比伦空中花园七大奇迹'},{k:'事件',v:'前586年毁灭耶路撒冷'}],
+            en:[{k:'Life',v:'c.634–562 BC'},{k:'Reign',v:'605–562 BC'},{k:'Built',v:'Hanging Gardens of Babylon'},{k:'Key',v:'Jerusalem 586 BC'}]},
+     rels:[{id:'cyrus',type:'被推翻',label:'居鲁士推翻巴比伦'},{id:'hammurabi',type:'同文明',label:'巴比伦文明传承'}],
+     baidu:'https://baike.baidu.com/item/%E5%B0%BC%E5%B8%83%E7%94%B2%E5%B0%BC%E6%92%92%E4%BA%8C%E4%B8%96',wiki:'https://zh.wikipedia.org/wiki/%E5%B0%BC%E5%B8%83%E7%94%B2%E5%B0%BC%E6%92%92%E4%BA%8C%E4%B8%96',official:'https://www.britannica.com/biography/Nebuchadnezzar-II'},
+   ],
+   timeline:[
+    {era:'前3500年',label:'苏美尔文明',items:['hammurabi','nebuchadnezzar'],
+     events:[{y:'-3500',e:'苏美尔人发明楔形文字，人类最早的书写系统'},{y:'-3000',e:'乌鲁克城邦兴起，世界最早的城市，苏美尔城邦文明鼎盛'},{y:'-2700',e:'吉尔伽美什史诗成型，世界最古老的文学作品，早于荷马史诗2000年'}]},
+    {era:'前1754年',label:'古巴比伦',items:['hammurabi','nebuchadnezzar','cyrus'],
+     events:[{y:'-1754',e:'汉谟拉比颁布法典，282条法律刻于石柱'},{y:'-1700',e:'巴比伦成为美索不达米亚最大城市'},{y:'-1600',e:'赫梯人入侵，古巴比伦王国灭亡'}]},
+    {era:'前634年',label:'新巴比伦',items:['nebuchadnezzar','hammurabi','cyrus'],
+     events:[{y:'-634',e:'尼布甲尼撒二世诞生'},{y:'-605',e:'卡尔赫米什战役，新巴比伦称霸近东'},{y:'-586',e:'攻陷耶路撒冷，所罗门圣殿被毁，巴比伦之囚'},{y:'-539',e:'居鲁士大帝征服巴比伦，波斯帝国统治开始'}]},
+   ]},
+
+  {id:'peru',zh:'秘鲁',en:'Peru',flag:'🇵🇪',lat:-9,lon:-75,
+   color:{h:45,s:75,l:50},music:'latin',
+   tagline:{zh:'印加帝国的黄金之国，安第斯山脉的天空之城',en:'Golden realm of the Inca, home of Machu Picchu in the clouds'},
+   heroImg:'https://images.unsplash.com/photo-1526392060635-9d6019884377?w=600&q=80',
+   tooltipImg:'https://images.unsplash.com/photo-1526392060635-9d6019884377?w=300&q=70',
+   items:[
+    {cat:'遗迹',id:'machu_picchu',zh:'马丘比丘',en:'Machu Picchu',era:'约1450年',icon:'🏔️',
+     img:'https://images.unsplash.com/photo-1526392060635-9d6019884377?w=500&q=75',
+     desc:{zh:'印加帝国最伟大的建筑奇迹，建于海拔2430米的安第斯山顶。1572年后彻底遗弃，被丛林湮没，直到1911年才被重新发现。其精密石块不用砂浆，刀片无法插入石缝。',en:'The Inca citadel at 2,430m altitude, abandoned in the 16th century and rediscovered in 1911. Its dry-stone walls fit so precisely no blade can pass between them.'},
+     facts:{zh:[{k:'海拔',v:'2430米'},{k:'建造',v:'约1450年'},{k:'重发现',v:'1911年，宾厄姆'},{k:'UNESCO',v:'1983年'}],
+            en:[{k:'Altitude',v:'2,430m'},{k:'Built',v:'c.1450 AD'},{k:'Rediscovered',v:'1911, Bingham'},{k:'UNESCO',v:'1983'}]},
+     rels:[],
+     baidu:'https://baike.baidu.com/item/%E9%A9%AC%E4%B8%98%E6%AF%94%E4%B8%98',wiki:'https://zh.wikipedia.org/wiki/%E9%A9%AC%E4%B8%98%E6%AF%94%E4%B8%98',official:'https://whc.unesco.org/en/list/274'},
+,
+    {cat:'历史人物',id:'pachacuti',zh:'帕查库蒂',en:'Pachacuti Inca Yupanqui',era:'1418-1471年',icon:'👑',
+     img:'https://images.unsplash.com/photo-1526392060635-9d6019884377?w=500&q=75',
+     desc:{zh:'印加帝国最伟大的皇帝，马丘比丘的建造者。将一个小王国扩展为南美洲最大的帝国，疆域从厄瓜多尔延伸至智利。发明了基普（结绳记事）行政系统管理帝国。',en:'The greatest Inca emperor and builder of Machu Picchu. He transformed a small kingdom into South America’s largest empire, stretching from Ecuador to Chile.'},
+     facts:{zh:[{k:'生平',v:'约1418-1471年'},{k:'建造',v:'马丘比丘约1450年'},{k:'疆域',v:'从厄瓜多尔至智利'},{k:'发明',v:'基普结绳记事行政系统'}],
+            en:[{k:'Life',v:'c.1418–1471'},{k:'Built',v:'Machu Picchu c.1450'},{k:'Empire',v:'Ecuador to Chile'},{k:'System',v:'Quipu knotted records'}]},
+     rels:[{id:'machu_picchu',type:'建造者',label:'马丘比丘建造者'}],
+     baidu:'https://baike.baidu.com/item/%E5%B8%95%E6%9F%A5%E5%BA%93%E8%92%82',wiki:'https://zh.wikipedia.org/wiki/%E5%B8%95%E6%9F%A5%E5%BA%93%E8%92%B8%C2%B7%E5%8D%B0%E5%8A%A0',official:'https://www.britannica.com/biography/Pachacuti'},
+    {cat:'遗迹',id:'nazca_lines',zh:'纳斯卡线条',en:'Nazca Lines',era:'前500-500年',icon:'🛸',
+     img:'https://images.unsplash.com/photo-1526392060635-9d6019884377?w=500&q=75',
+     desc:{zh:'秘鲁纳斯卡沙漠中绵延数公里的巨型地画，只有在空中才能看出完整形状——蜘蛛、猴子、蜂鸟、宇航员。如何建造、为何建造至今成谜，是世界考古学最大未解之谜之一。',en:'Giant geoglyphs in the Nazca Desert only fully visible from the air — spiders, monkeys, hummingbirds. How and why they were made remains one of archaeology’s greatest mysteries.'},
+     facts:{zh:[{k:'年代',v:'前500-500年'},{k:'数量',v:'800条线，300个几何图形，70个动植物图案'},{k:'最大',v:'长达370米'},{k:'UNESCO',v:'1994年'}],
+            en:[{k:'Period',v:'500 BC–500 AD'},{k:'Count',v:'800 lines, 300 figures, 70 animals'},{k:'Largest',v:'Up to 370m long'},{k:'UNESCO',v:'1994'}]},
+     rels:[{id:'machu_picchu',type:'同国',label:'秘鲁古文明'}],
+     baidu:'https://baike.baidu.com/item/%E7%BA%B3%E6%96%AF%E5%8D%A1%E7%BA%BF%E6%9D%A1',wiki:'https://zh.wikipedia.org/wiki/%E7%BA%B3%E6%96%AF%E5%8D%A1%E7%BA%BF%E6%9D%A1',official:'https://whc.unesco.org/en/list/700'}   ],
+   timeline:[
+    {era:'1450年',label:'印加帝国',items:['machu_picchu','pachacuti','nazca_lines']},
+   ]},
+
+  {id:'mexico',zh:'墨西哥',en:'Mexico',flag:'🇲🇽',lat:23,lon:-102,
+   color:{h:30,s:80,l:50},music:'latin',
+   tagline:{zh:'阿兹特克与玛雅文明的传承之地',en:'Land of Aztec and Maya civilizations'},
+   heroImg:'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=600&q=80',
+   tooltipImg:'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=300&q=70',
+   items:[
+    {cat:'遗迹',id:'teotihuacan',zh:'特奥蒂瓦坎',en:'Teotihuacan',era:'1-600年',icon:'🏛️',
+     img:'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=500&q=75',
+     desc:{zh:'前哥伦布时代美洲最大城市遗址，鼎盛期居住超过15万人。太阳金字塔体积居全球第三，约在600年后突然被废弃，建造者的身份至今成谜。',en:'The largest pre-Columbian city in the Americas, home to 150,000 at its peak. The Pyramid of the Sun is the world\'s third-largest by volume. Mysteriously abandoned around 600 AD.'},
+     facts:{zh:[{k:'鼎盛人口',v:'超过15万人'},{k:'太阳金字塔',v:'高65.5米'},{k:'废弃',v:'约600年，原因不明'},{k:'UNESCO',v:'1987年'}],
+            en:[{k:'Peak pop',v:'150,000+'},{k:'Pyramid height',v:'65.5m'},{k:'Abandoned',v:'c.600 AD, unknown reason'},{k:'UNESCO',v:'1987'}]},
+     rels:[],
+     baidu:'https://baike.baidu.com/item/%E7%89%B9%E5%A5%A5%E8%92%82%E7%93%A6%E5%9D%8E',wiki:'https://zh.wikipedia.org/wiki/%E7%89%B9%E5%A5%A5%E8%92%82%E7%93%A6%E5%9D%8E',official:'https://whc.unesco.org/en/list/414'},
+   ],
+   timeline:[
+    {era:'1年',label:'古典期',items:['teotihuacan','machu_picchu','nazca_lines']},
+   ]},
+
+  {id:'cambodia',zh:'柬埔寨',en:'Cambodia',flag:'🇰🇭',lat:12,lon:105,
+   color:{h:35,s:65,l:45},music:'asian',
+   tagline:{zh:'吴哥文明的神秘遗迹，丛林中的神王帝国',en:'Mysterious ruins of the Khmer Empire in the jungle'},
+   heroImg:'https://images.unsplash.com/photo-1555217851-6141535bd771?w=600&q=80',
+   tooltipImg:'https://images.unsplash.com/photo-1555217851-6141535bd771?w=300&q=70',
+   items:[
+    {cat:'遗迹',id:'angkor_wat',zh:'吴哥窟',en:'Angkor Wat',era:'约1113-1150年',icon:'🛕',
+     img:'https://images.unsplash.com/photo-1555217851-6141535bd771?w=500&q=75',
+     desc:{zh:'世界上最大的宗教建筑，由高棉国王苏利耶跋摩二世建造。护城河宽190米，五塔象征须弥山，800米浮雕走廊描绘印度史诗与高棉神话，是人类宗教建筑艺术的巅峰。',en:'The world\'s largest religious monument. Built by Khmer King Suryavarman II, its 800m gallery of bas-reliefs depicts Hindu epics and Khmer mythology with breathtaking detail.'},
+     facts:{zh:[{k:'面积',v:'162.6公顷'},{k:'护城河',v:'宽190米'},{k:'建造者',v:'苏利耶跋摩二世'},{k:'UNESCO',v:'1992年'}],
+            en:[{k:'Area',v:'162.6 hectares'},{k:'Moat',v:'190m wide'},{k:'Builder',v:'Suryavarman II'},{k:'UNESCO',v:'1992'}]},
+     rels:[],
+     baidu:'https://baike.baidu.com/item/%E5%90%B4%E5%93%A5%E7%AA%9F',wiki:'https://zh.wikipedia.org/wiki/%E5%90%B4%E5%93%A5%E7%AA%9F',official:'https://whc.unesco.org/en/list/668'},
+,
+    {cat:'遗迹',id:'angkor_thom',zh:'吴哥城',en:'Angkor Thom',era:'约1177-1220年',icon:'🏯',
+     img:'https://images.unsplash.com/photo-1555217851-6141535bd771?w=500&q=75',
+     desc:{zh:'阇耶跋摩七世建造的高棉最后的都城，面积9平方公里，巴扬寺216个巨型石雕人面令人叹为观止。城内大象台、战胜门等遗址展现了高棉帝国鼎盛时期的城市规划。',en:'The last capital of the Khmer Empire, 9 km² in area. Bayon temple’s 216 giant stone faces are awe-inspiring. Built by Jayavarman VII after the Cham invasion and sacking of Angkor.'},
+     facts:{zh:[{k:'建造',v:'约1177-1220年'},{k:'建造者',v:'阇耶跋摩七世'},{k:'面积',v:'9平方公里'},{k:'代表',v:'巴扬寺216面石雕人面'}],
+            en:[{k:'Built',v:'c.1177–1220'},{k:'Builder',v:'Jayavarman VII'},{k:'Area',v:'9 km²'},{k:'Icon',v:'Bayon’s 216 stone faces'}]},
+     rels:[{id:'angkor_wat',type:'相邻',label:'吴哥窟与吴哥城'}],
+     baidu:'https://baike.baidu.com/item/%E5%90%B4%E5%93%A5%E5%9F%8E',wiki:'https://zh.wikipedia.org/wiki/%E5%90%B4%E5%93%A5%E5%9F%8E',official:'https://whc.unesco.org/en/list/668'},
+   ],
+   timeline:[
+    {era:'1113年',label:'高棉黄金时代',items:['angkor_wat','angkor_thom']},
+   ]},
+
+  {id:'jordan',zh:'约旦',en:'Jordan',flag:'🇯🇴',lat:31,lon:36,
+   color:{h:20,s:75,l:50},music:'middle_east',
+   tagline:{zh:'玫瑰色城市佩特拉，沙漠中的纳巴泰奇迹',en:'Rose-red Petra, the Nabataean wonder carved from sandstone'},
+   heroImg:'https://images.unsplash.com/photo-1548013146-72479768bada?w=600&q=80',
+   tooltipImg:'https://images.unsplash.com/photo-1548013146-72479768bada?w=300&q=70',
+   items:[
+    {cat:'遗迹',id:'petra',zh:'佩特拉古城',en:'Petra',era:'前4世纪',icon:'🏛️',
+     img:'https://images.unsplash.com/photo-1548013146-72479768bada?w=500&q=75',
+     desc:{zh:'纳巴泰王国首都，玫瑰之城，将城市凿入玫瑰红色砂岩悬崖而得名。繁荣于香料贸易，消失约1000年后，1812年被重新发现，是世界新七大奇迹之一。',en:'Capital of the Nabataean kingdom, carved into rose-red sandstone cliffs. Lost for 1,000 years, rediscovered in 1812. One of the New Seven Wonders of the World.'},
+     facts:{zh:[{k:'别称',v:'玫瑰之城'},{k:'峡谷入口',v:'西克峡谷，长1.2公里'},{k:'代表建筑',v:'卡兹尼神殿'},{k:'UNESCO',v:'1985年'}],
+            en:[{k:'Nickname',v:'The Rose City'},{k:'Entrance',v:'Siq gorge, 1.2km'},{k:'Icon',v:'Al-Khazneh (Treasury)'},{k:'UNESCO',v:'1985'}]},
+     rels:[],
+     baidu:'https://baike.baidu.com/item/%E4%BD%A9%E7%89%B9%E6%8B%89',wiki:'https://zh.wikipedia.org/wiki/%E4%BD%A9%E7%89%B9%E6%8B%89',official:'https://whc.unesco.org/en/list/326'}
+   ],
+   timeline:[
+    {era:'前4世纪',label:'纳巴泰王国',items:['petra'],
+     events:[{y:'-400',e:'纳巴泰人建立佩特拉，控制阿拉伯香料贸易路线'},{y:'-100',e:'佩特拉鼎盛期，人口达三万，成为区域贸易中心'},{y:'106',e:'罗马帝国并吞纳巴泰王国，佩特拉成为省会'}]}
+   ]}
+];
+
+// Cat to EN map
+const CAT_EN = {'遗迹':'Sites','博物馆':'Museums','文物':'Artifacts','历史人物':'Figures','全部':'All'};
+
+const ERA_LABEL_EN = {
+  '史前与早王朝':'Prehistoric & Early Dynasties',
+  '古王国·金字塔时代':'Old Kingdom · Age of Pyramids',
+  '新王国·黄金时代':'New Kingdom · Golden Age',
+  '希腊化与罗马时代':'Hellenistic & Roman Period',
+  '新石器时代':'Neolithic Age',
+  '商朝':'Shang Dynasty',
+  '春秋战国':'Spring & Autumn · Warring States',
+  '秦汉帝国':'Qin-Han Empire',
+  '隋唐盛世':'Sui-Tang Golden Age',
+  '宋元时代':'Song-Yuan Dynasty',
+  '明清王朝':'Ming-Qing Dynasty',
+  '古风时代':'Archaic Period',
+  '古典黄金时代':'Classical Golden Age',
+  '希腊化时代':'Hellenistic Age',
+  '罗马建城':'Founding of Rome',
+  '共和国末期与凯撒':'Late Republic & Caesar',
+  '罗马帝国盛期':'Roman Empire Peak',
+  '中世纪与前文艺复兴':'Medieval & Pre-Renaissance',
+  '文艺复兴':'Renaissance',
+  '印度河文明':'Indus Valley Civilization',
+  '轴心时代':'Axial Age',
+  '孔雀王朝':'Maurya Empire',
+  '笈多王朝':'Gupta Empire',
+  '莫卧儿帝国':'Mughal Empire',
+  '古坟时代':'Kofun Period',
+  '平安时代':'Heian Period',
+  '镰仓幕府':'Kamakura Shogunate',
+  '战国时代':'Sengoku Period',
+  '明治维新':'Meiji Restoration',
+  '太阳王时代':'Age of the Sun King',
+  '启蒙与革命':'Enlightenment & Revolution',
+  '史前与罗马时代':'Prehistoric & Roman Era',
+  '中世纪':'Medieval Period',
+  '文艺复兴与莎士比亚':'Renaissance & Shakespeare',
+  '科学革命':'Scientific Revolution',
+  '阿契美尼德王朝':'Achaemenid Dynasty',
+  '萨珊帝国':'Sassanid Empire',
+  '伊斯兰黄金时代':'Islamic Golden Age',
+  '萨法维王朝':'Safavid Dynasty',
+  '苏美尔文明':'Sumerian Civilization',
+  '古巴比伦':'Ancient Babylon',
+  '新巴比伦':'Neo-Babylonian Empire',
+  '印加帝国':'Inca Empire',
+  '古典期':'Classic Period',
+  '高棉黄金时代':'Khmer Golden Age',
+  '纳巴泰王国':'Nabataean Kingdom',
+};
+
+
+// ══ SANITIZE: remove any null/undefined from all item arrays ══
+COUNTRIES.forEach(c=>{
+  if(c.items) c.items = c.items.filter(x=>x&&x.id&&x.zh);
+  if(c.timeline) c.timeline.forEach(era=>{
+    if(era.items) era.items = (era.items||[]).filter(x=>typeof x==='string'&&x.length>0);
+  });
+});
+
+
+// ══════════════════════════════════════════════
+// GLOBE ENGINE
+// ══════════════════════════════════════════════
+let zoom=1,rotX=0.3,rotY=0,isDrag=false,dragS={x:0,y:0},rotS={x:0,y:0};
+let autoRot=true,hovered=null,currentCountry=null,langCur='zh';
+let activeCat='全部',currentItem=null,tlCentury=null;
+
+const stC=document.getElementById('cs'),stX=stC.getContext('2d');
+const glC=document.getElementById('cg'),glX=glC.getContext('2d');
+let stars=[],W,H;
+
+function resize(){
+  W=window.innerWidth-parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sw'));
+  H=window.innerHeight;
+  stC.width=glC.width=window.innerWidth;
+  stC.height=glC.height=H;
+  if(!stars.length)genStars();
+  drawStars();
+}
+
+function genStars(){
+  stars=[];
+  for(let i=0;i<280;i++) stars.push({x:Math.random()*window.innerWidth,y:Math.random()*H,r:Math.random()*1.1+0.2,a:Math.random()*.6+.1});
+}
+function drawStars(){
+  stX.clearRect(0,0,window.innerWidth,H);
+  stars.forEach(s=>{stX.beginPath();stX.arc(s.x,s.y,s.r,0,Math.PI*2);stX.fillStyle=`rgba(245,237,224,${s.a})`;stX.fill()});
+}
+
+function ll2xyz(la,lo){
+  const p=(90-la)*Math.PI/180,t=(lo+180)*Math.PI/180;
+  return{x:-Math.sin(p)*Math.cos(t),y:Math.cos(p),z:Math.sin(p)*Math.sin(t)};
+}
+function rot(p){
+  let x1=p.x*Math.cos(rotY)+p.z*Math.sin(rotY),z1=-p.x*Math.sin(rotY)+p.z*Math.cos(rotY);
+  let y2=p.y*Math.cos(rotX)-z1*Math.sin(rotX),z2=p.y*Math.sin(rotX)+z1*Math.cos(rotX);
+  return{x:x1,y:y2,z:z2};
+}
+
+// Floating image bubbles
+const imgBubbleCache={};
+function getImg(url,id){
+  if(imgBubbleCache[id]) return imgBubbleCache[id];
+  const img=new Image();
+  img.crossOrigin='anonymous';
+  img.src=url;
+  img.onload=()=>{imgBubbleCache[id]=img};
+  imgBubbleCache[id]=img;
+  return img;
+}
+
+function drawGlobe(){
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*.32*zoom;
+  glX.clearRect(0,0,window.innerWidth,H);
+  // Globe bg
+  const g=glX.createRadialGradient(cx-R*.3,cy-R*.3,R*.05,cx,cy,R);
+  g.addColorStop(0,'rgba(28,18,8,.95)');g.addColorStop(.7,'rgba(12,8,4,.97)');g.addColorStop(1,'rgba(4,3,2,.99)');
+  glX.beginPath();glX.arc(cx,cy,R,0,Math.PI*2);glX.fillStyle=g;glX.fill();
+  const eg=glX.createRadialGradient(cx,cy,R*.85,cx,cy,R);
+  eg.addColorStop(0,'rgba(255,255,255,0)');eg.addColorStop(1,'rgba(255,255,255,.08)');
+  glX.beginPath();glX.arc(cx,cy,R,0,Math.PI*2);glX.fillStyle=eg;glX.fill();
+  // Grid
+  glX.strokeStyle='rgba(255,255,255,.06)';glX.lineWidth=.5;
+  for(let la=-60;la<=60;la+=30){
+    const ph=(90-la)*Math.PI/180,y0=Math.cos(ph),rc=Math.sin(ph);
+    glX.beginPath();let f=true;
+    for(let lo=0;lo<=360;lo+=3){
+      const p=rot({x:-rc*Math.cos(lo*Math.PI/180),y:y0,z:rc*Math.sin(lo*Math.PI/180)});
+      if(p.z<0){f=true;continue}
+      const sx=cx+p.x*R,sy=cy-p.y*R;
+      f?glX.moveTo(sx,sy):glX.lineTo(sx,sy);f=false;
+    }glX.stroke();
+  }
+  for(let lo=0;lo<360;lo+=30){
+    glX.beginPath();let f=true;
+    for(let la=-80;la<=80;la+=3){
+      const p=rot(ll2xyz(la,lo));
+      if(p.z<0){f=true;continue}
+      const sx=cx+p.x*R,sy=cy-p.y*R;
+      f?glX.moveTo(sx,sy):glX.lineTo(sx,sy);f=false;
+    }glX.stroke();
+  }
+  // Countries — flag bubbles + glow dots + labels
+  COUNTRIES.forEach(c=>{
+    const p=rot(ll2xyz(c.lat,c.lon));
+    if(p.z<-.12) return;
+    const sx=cx+p.x*R, sy=cy-p.y*R;
+    const alpha=Math.min(1,(p.z+.3)/1.3);
+    const isH=hovered&&hovered.id===c.id;
+    const bR=isH?38:28;
+    const bubY=sy-bR-10;
+
+    if(p.z>.05){
+      // ── photo bubble (try image, fall back to solid) ──
+      const img=getImg(c.tooltipImg,c.id);
+      glX.save();
+      glX.globalAlpha=Math.min(1,alpha*(isH?1:.85));
+      glX.beginPath();glX.arc(sx,bubY,bR,0,Math.PI*2);glX.clip();
+      if(img.complete&&img.naturalWidth>0){
+        glX.drawImage(img,sx-bR,bubY-bR,bR*2,bR*2);
+        // darken overlay so flag reads clearly
+        glX.fillStyle='rgba(0,0,0,.3)';glX.fillRect(sx-bR,bubY-bR,bR*2,bR*2);
+      } else {
+        // solid country-color background
+        const h=c.color?c.color.h:40;
+        glX.fillStyle=`hsl(${h},55%,18%)`;glX.fill();
+      }
+      glX.restore();
+
+      // ── flag emoji centred in bubble ──
+      glX.save();
+      glX.globalAlpha=Math.min(1,alpha*(isH?1:.9));
+      glX.font=`${isH?22:16}px serif`;
+      glX.textAlign='center';glX.textBaseline='middle';
+      glX.fillText(c.flag,sx,bubY);
+      glX.textBaseline='alphabetic';
+      glX.restore();
+
+      // ── ring ──
+      glX.beginPath();glX.arc(sx,bubY,bR,0,Math.PI*2);
+      glX.strokeStyle=isH?`rgba(255,255,255,${alpha})`:`rgba(255,255,255,${alpha*.5})`;
+      glX.lineWidth=isH?2.5:1.2;glX.stroke();
+
+      // ── hover pulse ring ──
+      if(isH){
+        glX.beginPath();glX.arc(sx,bubY,bR+7,0,Math.PI*2);
+        glX.strokeStyle=`rgba(255,255,255,${alpha*.25})`;glX.lineWidth=1;glX.stroke();
+      }
+
+      // ── connector stem ──
+      glX.strokeStyle=isH?`rgba(255,255,255,${alpha*.6})`:`rgba(255,255,255,${alpha*.2})`;
+      glX.lineWidth=isH?1.5:.8;
+      glX.beginPath();glX.moveTo(sx,bubY+bR);glX.lineTo(sx,sy-5);glX.stroke();
+    }
+
+    // ── glow dot on spine ──
+    if(isH){
+      const gw=glX.createRadialGradient(sx,sy,0,sx,sy,26);
+      gw.addColorStop(0,`rgba(255,255,255,${.4*alpha})`);gw.addColorStop(1,'rgba(255,255,255,0)');
+      glX.beginPath();glX.arc(sx,sy,26,0,Math.PI*2);glX.fillStyle=gw;glX.fill();
+    }
+    glX.beginPath();glX.arc(sx,sy,isH?8:4.5,0,Math.PI*2);
+    glX.fillStyle=isH?'#ffffff':`rgba(255,255,255,${alpha*.7})`;glX.fill();
+
+    // ── country name ──
+    if(p.z>.1||isH){
+      glX.save();
+      glX.globalAlpha=Math.min(1,alpha*(isH?1:.75));
+      // background pill for legibility
+      const name=langCur==='zh'?c.zh:c.en;
+      glX.font=isH?`bold 14px 'Noto Serif SC',serif`:`12px 'Noto Serif SC',serif`;
+      const tw=glX.measureText(name).width;
+      const ty=sy+16;
+      if(isH){
+        glX.fillStyle='rgba(0,0,0,.65)';
+        const pw=tw+14,ph=18,pr=5;
+        const px=sx-pw/2,py=ty-14;
+        glX.beginPath();
+        glX.moveTo(px+pr,py);glX.lineTo(px+pw-pr,py);glX.quadraticCurveTo(px+pw,py,px+pw,py+pr);
+        glX.lineTo(px+pw,py+ph-pr);glX.quadraticCurveTo(px+pw,py+ph,px+pw-pr,py+ph);
+        glX.lineTo(px+pr,py+ph);glX.quadraticCurveTo(px,py+ph,px,py+ph-pr);
+        glX.lineTo(px,py+pr);glX.quadraticCurveTo(px,py,px+pr,py);
+        glX.closePath();glX.fill();
+      }
+      glX.fillStyle=isH?'#fff':`rgba(255,255,255,${alpha*.9})`;
+      glX.textAlign='center';
+      glX.fillText(name,sx,ty);
+      glX.restore();
+    }
+  });
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  if(autoRot&&!isDrag) rotY+=.003;
+  drawGlobe();
+}
+
+// ══════════════════════════════════════════════
+// GLOBE INTERACTION
+// ══════════════════════════════════════════════
+function getR(){return Math.min(W,H)*.32*zoom}
+function findAt(mx,my){
+  const cx=W/2,cy=H/2,R=getR();
+  let best=null,bestZ=-99;
+  COUNTRIES.forEach(c=>{
+    const p=rot(ll2xyz(c.lat,c.lon));if(p.z<-.05)return;
+    const sx=cx+p.x*R,sy=cy-p.y*R;
+    if(Math.hypot(mx-sx,my-(sy-28))<32&&p.z>bestZ){bestZ=p.z;best=c}
+  });
+  return best;
+}
+
+glC.addEventListener('mousemove',e=>{
+  if(isDrag){
+    rotY=rotS.x+(e.clientX-dragS.x)*.008;
+    rotX=Math.max(-.8,Math.min(.8,rotS.y+(e.clientY-dragS.y)*.005));
+    autoRot=false;hideTip();return;
+  }
+  const c=findAt(e.clientX,e.clientY);
+  if(c!==hovered){hovered=c;c?showTip(c,e.clientX,e.clientY):hideTip();}
+  else if(c) moveTip(e.clientX,e.clientY);
+});
+glC.addEventListener('mousedown',e=>{isDrag=true;dragS={x:e.clientX,y:e.clientY};rotS={x:rotY,y:rotX};glC.classList.add('drag');hideTip()});
+window.addEventListener('mouseup',()=>{isDrag=false;glC.classList.remove('drag')});
+glC.addEventListener('click',e=>{const c=findAt(e.clientX,e.clientY);if(c)openCountry(c)});
+glC.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.5,Math.min(3.5,zoom*(e.deltaY<0?1.1:.9)))});
+glC.addEventListener('mouseleave',()=>{hovered=null;hideTip()});
+function adjZoom(f){zoom=Math.max(.5,Math.min(3.5,zoom*f))}
+
+// ══════════════════════════════════════════════
+// TOOLTIP
+// ══════════════════════════════════════════════
+const tip=document.getElementById('tip');
+function showTip(c,mx,my){
+  document.getElementById('tip-img').src=c.tooltipImg;
+  const _tn=document.getElementById('tip-name');if(_tn)_tn.textContent=langCur==='zh'?c.zh:c.en;
+  const _ts=document.getElementById('tip-sub');if(_ts)_ts.textContent=c.flag+' '+(langCur==='zh'?c.tagline.zh:c.tagline.en);
+  moveTip(mx,my);tip.style.opacity='1';
+}
+function moveTip(mx,my){
+  const tw=240,th=180;
+  let x=mx+14,y=my-10;
+  if(x+tw>window.innerWidth-330) x=mx-tw-10;
+  if(y+th>H) y=H-th;
+  tip.style.left=x+'px';tip.style.top=y+'px';
+}
+function hideTip(){tip.style.opacity='0'}
+
+// ══════════════════════════════════════════════
+// SIDEBAR LIST
+// ══════════════════════════════════════════════
+function buildSidebar(filter=''){
+  const list=document.getElementById('sp-list');
+  const q=filter.toLowerCase();
+  list.innerHTML=COUNTRIES.filter(c=>{
+    if(!q) return true;
+    return c.zh.includes(q)||c.en.toLowerCase().includes(q)||(langCur==='zh'?c.tagline.zh:c.tagline.en).toLowerCase().includes(q);
+  }).map(c=>`
+    <div class="cr ${currentCountry&&currentCountry.id===c.id?'active':''}" onclick="openCountry(COUNTRIES.find(x=>x.id==='${c.id}'))">
+      <div class="cr-top">
+        <span class="crf">${c.flag}</span>
+        <div class="cri">
+          <div class="crn">${langCur==='zh'?c.zh:c.en}</div>
+          <div class="crs">${langCur==='zh'?c.tagline.zh:c.tagline.en}</div>
+        </div>
+      </div>
+      <div class="cr-tags">
+        ${[...new Set((c.items||[]).filter(Boolean).map(i=>i.cat))].map(cat=>`<span class="cr-tag">${langCur==='zh'?cat:CAT_EN[cat]||cat}</span>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+function filterList(){buildSidebar(document.getElementById('search-inp').value)}
+
+// ══════════════════════════════════════════════
+// COUNTRY VIEW
+// ══════════════════════════════════════════════
+
+
+// category filter removed — nebula handles this
+
+// ══════════════════════════════════════════════
+// TIMELINE + NEBULA ENGINE  v4
+// ══════════════════════════════════════════════
+
+// ─── state ─────────────────────────────────────
+// timeline is now DOM-based — no tlNodes/tlHover canvas state needed
+let nebulaNodes=[];      // {item,x,y,r,img,imgOk,ghost,vx,vy}
+let nebulaFilter='all';  // 'all','遗迹','历史人物','文物','博物馆'
+let nebulaEdges=[];      // {a,b,label}
+let nebulaHover=-1;
+let nebulaAF=null;
+let nebStars=[];
+let panState=null;       // {sx,sy,ox,oy,moved}
+let nebulaOff={x:0,y:0};
+
+// ─── helpers ───────────────────────────────────
+function parseYear(s){
+  const m=s.match(/(前)?(\d+)/);
+  return m?(m[1]?-parseInt(m[2]):parseInt(m[2])):0;
+}
+function lerp(a,b,t){return a+(b-a)*t}
+function easeOut(t){return 1-(1-t)*(1-t)}
+
+// ══════════════════════════════════════════════
+// OPEN COUNTRY — entry point
+// ══════════════════════════════════════════════
+function openCountry(c){
+  if(!c||!c.id){console.error('openCountry: invalid country',c);return;}
+  currentCountry=c;autoRot=false;hideTip();
+  // header
+  const _lb=document.getElementById('cv-lang-btn');if(_lb)_lb.textContent=langCur==='zh'?'EN':'中';
+  const _cvf=document.getElementById('cv-flag');if(_cvf)_cvf.textContent=c.flag;
+  const _cvn=document.getElementById('cv-name');if(_cvn)_cvn.textContent=langCur==='zh'?c.zh:c.en;
+  const _cvs=document.getElementById('cv-sub');if(_cvs)_cvs.textContent=langCur==='zh'?c.tagline.zh:c.tagline.en;
+  const _cbl=document.querySelector('.cv-back-label');if(_cbl)_cbl.textContent=langCur==='zh'?'返回':'Back';
+  const _nbb2=document.getElementById('nebula-back-btn');if(_nbb2)_nbb2.textContent=langCur==='zh'?'← 返回时间轴':'← Back to Timeline';
+  const _spt=document.getElementById('sp-title');if(_spt)_spt.textContent=langCur==='zh'?'文明列表':'Civilizations';
+  document.getElementById('cv').classList.add('open');
+  closeCard();
+  // ensure nebula is closed
+  exitNebula(true);
+  initTimeline(c);  // DOM-based, no sizing needed
+  playMusic(c.music);
+  buildSidebar();
+  updateBC(c);
+}
+
+function closeCv(){
+  document.getElementById('cv').classList.remove('open');
+  exitNebula(true);
+  currentCountry=null;autoRot=true;closeCard();stopMusic();buildSidebar();updateBC(null);
+}
+
+// stubs kept for lang compat
+function setMode(){}
+function buildGrid(){}
+
+// ══════════════════════════════════════════════
+// TIMELINE — pure DOM (no canvas, guaranteed clicks)
+// ══════════════════════════════════════════════
+
+function parseYear(s){
+  const m = s.match(/(前)?(\d+)/);
+  return m ? (m[1] ? -parseInt(m[2]) : parseInt(m[2])) : 0;
+}
+
+function initTimeline(c){
+  const container = document.getElementById('tl-dom');
+  if(!container) return;
+  container.innerHTML = '';
+
+  const tl = [...c.timeline].sort((a,b)=>parseYear(a.era)-parseYear(b.era));
+  const years = tl.map(e=>parseYear(e.era));
+  const firstYear = Math.min(...years);
+  const lastYear  = Math.max(...years);
+  const nowYear   = new Date().getFullYear();
+
+  // Range with breathing room
+  const roundTo = Math.abs(firstYear)>2000?500:Math.abs(firstYear)>500?100:50;
+  let minY = Math.floor((firstYear - Math.max(200, Math.abs(firstYear)*.1)) / roundTo) * roundTo;
+  let maxY = Math.max(lastYear + 100, nowYear + 50);
+  const span = maxY - minY || 1;
+
+  // Layout percentages
+  function pct(y){ return ((y - minY) / span * 100).toFixed(3) + '%'; }
+
+  // ── Spine ──
+  const spine = document.createElement('div');
+  spine.id = 'tl-spine';
+  container.appendChild(spine);
+
+  // ── Hint ──
+  const hint = document.createElement('div');
+  hint.id = 'tl-hint';
+  hint.textContent = langCur==='zh'
+    ? '◀  悬停预览  ·  点击节点进入时代  ▶'
+    : '◀  HOVER TO PREVIEW  ·  CLICK A NODE TO ENTER  ▶';
+  container.appendChild(hint);
+
+  // ── Zero line (if spans BC/AD) ──
+  if(minY < 0 && maxY > 0){
+    const zl = document.createElement('div');
+    zl.id = 'tl-zero';
+    zl.style.left = pct(0);
+    const zlab = document.createElement('div');
+    zlab.id = 'tl-zero-label';
+    zlab.style.left = pct(0);
+    zlab.textContent = '0';
+    container.appendChild(zl);
+    container.appendChild(zlab);
+  }
+
+  // ── NOW line ──
+  const nowl = document.createElement('div');
+  nowl.id = 'tl-now';
+  nowl.style.left = pct(nowYear);
+  const nowlab = document.createElement('div');
+  nowlab.id = 'tl-now-label';
+  nowlab.style.left = pct(nowYear);
+  nowlab.textContent = 'NOW';
+  container.appendChild(nowl);
+  container.appendChild(nowlab);
+
+  // ── Tick marks ──
+  const step = span>3000?500:span>800?200:span>200?50:25;
+  const tickStart = Math.ceil(minY/step)*step;
+  for(let y=tickStart; y<=maxY; y+=step){
+    if(Math.abs(y)<step*0.1) continue; // skip near-zero
+    const tick = document.createElement('div');
+    tick.className = 'tl-tick';
+    tick.style.left = pct(y);
+    tick.style.top  = '50%';
+    tick.innerHTML = `<div class="tl-tick-line"></div><div class="tl-tick-label">${y<0?-y:y}</div>`;
+    container.appendChild(tick);
+  }
+
+  // ── Era NODE BUTTONS ──
+  tl.forEach((era, i)=>{
+    const y  = parseYear(era.era);
+    const above = i%2===0;   // alternate above/below spine
+    const items = (era.items||[]).map(id=>c.items.find(x=>x.id===id)).filter(Boolean);
+    const evts  = era.events||[];
+
+    const btn = document.createElement('button');
+    btn.className = 'tl-node' + (above?' tl-node-above':'');
+    btn.style.left = pct(y);
+    btn.style.top  = '50%';
+    btn.setAttribute('aria-label', era.label);
+
+    const dot   = document.createElement('div'); dot.className='tl-node-dot';
+    const stem  = document.createElement('div'); stem.className='tl-node-stem';
+    const labs  = document.createElement('div'); labs.className='tl-node-labels';
+
+    const yearNum = y<0 ? String(-y) : String(y);
+    labs.innerHTML = `
+      <div class="tl-node-label">${yearNum}</div>
+      <div class="tl-node-name">${langCur==='zh'?era.label:(ERA_LABEL_EN[era.label]||era.label)}</div>
+      <div class="tl-node-count">${evts.length||items.length} ✦</div>`;
+
+    if(above){ btn.appendChild(labs); btn.appendChild(stem); btn.appendChild(dot); }
+    else      { btn.appendChild(dot);  btn.appendChild(stem); btn.appendChild(labs); }
+
+    // HOVER — show popup
+    btn.addEventListener('mouseenter', e=>{
+      showTlPopup(era, items, evts, btn, container);
+    });
+    btn.addEventListener('mouseleave', ()=>{
+      hideTlPopup();
+    });
+
+    // CLICK — enter nebula immediately
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      enterNebula(c, era);
+    });
+
+    container.appendChild(btn);
+  });
+}
+
+// ── Popup helpers ──
+let popupTimer=null;
+function showTlPopup(era, items, evts, btn, container){
+  clearTimeout(popupTimer);
+  const pop = document.getElementById('tl-popup');
+  if(!pop) return;
+  const _tpe=document.getElementById('tl-popup-epoch');if(_tpe)_tpe.textContent=era.era;
+  const _tpt=document.getElementById('tl-popup-title');if(_tpt)_tpt.textContent=langCur==='zh'?era.label:(ERA_LABEL_EN[era.label]||era.label);
+  // In EN: use items (have .en). In ZH: prefer events. Fall back gracefully.
+  const rows = (langCur==='zh'&&evts.length)
+    ? evts
+    : items.length
+      ? items.map(it=>({y:it.era, e:langCur==='zh'?it.zh:it.en}))
+      : evts;
+  document.getElementById('tl-popup-rows').innerHTML = rows.map(r=>
+    `<div class="tl-popup-row"><strong>${r.y||''}</strong>${r.y?' &nbsp;':''}${r.e||''}</div>`
+  ).join('');
+
+  // Position popup: above or below the button
+  const cRect  = container.getBoundingClientRect();
+  const bRect  = btn.getBoundingClientRect();
+  let left = bRect.left - cRect.left + bRect.width/2 - 140;
+  left = Math.max(8, Math.min(left, cRect.width-348));
+  const isAbove = btn.classList.contains('tl-node-above');
+  const top = isAbove
+    ? bRect.bottom - cRect.top + 12
+    : bRect.top - cRect.top - 8;  // we'll flip via transform below
+
+  pop.style.left = left + 'px';
+  if(isAbove){
+    pop.style.top = top + 'px';
+    pop.style.bottom = 'auto';
+    pop.style.transform = '';
+  } else {
+    pop.style.bottom = (cRect.height - (bRect.top - cRect.top) + 12) + 'px';
+    pop.style.top = 'auto';
+    pop.style.transform = '';
+  }
+  pop.style.display = 'block';
+}
+
+function hideTlPopup(){
+  popupTimer = setTimeout(()=>{
+    const pop = document.getElementById('tl-popup');
+    if(pop) pop.style.display='none';
+  }, 120);
+}
+
+
+// ══════════════════════════════════════════════
+// NEBULA FILTER
+// ══════════════════════════════════════════════
+function setNebulaFilter(cat){
+  nebulaFilter=cat;
+  try{
+    document.querySelectorAll('.nf-btn').forEach(b=>{
+      b.classList.toggle('active', b.dataset.cat===cat);
+      if(b.dataset.cat==='all') b.textContent=langCur==='zh'?'全部':'All';
+      else if(b.dataset.cat==='遗迹') b.textContent=(langCur==='zh'?'🏛 遗迹':'🏛 Sites');
+      else if(b.dataset.cat==='历史人物') b.textContent=(langCur==='zh'?'👤 人物':'👤 Figures');
+      else if(b.dataset.cat==='文物') b.textContent=(langCur==='zh'?'🏺 文物':'🏺 Artifacts');
+      else if(b.dataset.cat==='博物馆') b.textContent=(langCur==='zh'?'🏛 博物馆':'🏛 Museums');
+    });
+  }catch(ex){}
+}
+
+// ══════════════════════════════════════════════
+// NEBULA — starfield canvas  
+// ══════════════════════════════════════════════
+function enterNebula(c, era){
+  document.getElementById('cv-nebula-view').classList.add('open');
+  try{const _neb=document.getElementById('nebula-era-badge');if(_neb)_neb.textContent=`${era.era}  ·  ${era.label}`;}catch(ex){}
+  try{const _nbt=document.getElementById('nebula-back-btn');if(_nbt)_nbt.textContent=langCur==='zh'?'← 返回时间轴':'← Back to Timeline';}catch(ex){}
+  const _nht=document.getElementById('nebula-hint');if(_nht)_nht.textContent=langCur==='zh'?'拖拽漫游 · 点击探索':'Drag to roam · click to explore';
+
+  const canvas=document.getElementById('nebula-canvas');
+  const view=document.getElementById('cv-nebula-view');
+  // Size canvas: nebula-body width minus info panel (230px), height minus header (52px)
+  const nR=view.getBoundingClientRect();
+  const totalW=(nR.width||view.offsetWidth||(window.innerWidth-320));
+  const totalH=(nR.height||view.offsetHeight||(window.innerHeight-56));
+  canvas.width=Math.max(200,totalW-230);
+  canvas.height=Math.max(200,totalH-52);
+  nebulaOff={x:0,y:0}; nebulaHover=-1;
+
+  // collect items for this era + related items (ghost nodes)
+  const eraItems=era.items.map(id=>c.items.find(x=>x.id===id)).filter(Boolean);
+  const extraSet=new Set();
+  eraItems.forEach(it=>(it.rels||[]).filter(Boolean).forEach(r=>{
+    if(r&&r.id&&!eraItems.find(x=>x.id===r.id)) extraSet.add(r.id);
+  }));
+  const ghostItems=[];
+  extraSet.forEach(id=>{
+    const found=c.items.find(x=>x&&x.id===id)||COUNTRIES.flatMap(cc=>(cc.items||[])).filter(Boolean).find(x=>x.id===id);
+    if(found) ghostItems.push(found);
+  });
+  const allItems=[...eraItems,...ghostItems].filter(Boolean);
+
+  // layout — golden angle spiral for organic feel
+  const W=canvas.width, H=canvas.height, cx=W/2, cy=H/2;
+  const golden=2.399963; // golden angle radians
+  nebulaNodes=allItems.map((item,i)=>{
+    const ghost=i>=eraItems.length;
+    const r=ghost?Math.sqrt(i)*55+160:Math.sqrt(i+1)*52+40;
+    const a=i*golden+(Math.random()-.5)*.3;
+    const jx=(Math.random()-.5)*30, jy=(Math.random()-.5)*30;
+    return{
+      item, ghost,
+      x:cx+Math.cos(a)*r+jx, y:cy+Math.sin(a)*r+jy,
+      r:ghost?18:(item&&item.cat==='历史人物')?28:24,
+      img:null,imgOk:false
+    };
+  });
+
+  // edges
+  nebulaEdges=[];
+  eraItems.forEach(item=>{
+    (item.rels||[]).forEach(rel=>{
+      const si=nebulaNodes.findIndex(n=>n&&n.item&&n.item.id===item.id);
+      const ti=nebulaNodes.findIndex(n=>n&&n.item&&n.item.id===rel.id);
+      if(si>=0&&ti>=0) nebulaEdges.push({a:si,b:ti,label:rel.type});
+    });
+  });
+
+  // image preload
+  nebulaNodes.forEach(n=>{
+    if(!n||!n.item) return;
+    const img=new Image();img.crossOrigin='anonymous';img.src=n.item.img||'';
+    img.onload=()=>{n.img=img;n.imgOk=true};
+  });
+
+  // generate background stars once
+  nebStars=Array.from({length:240},(_,i)=>({
+    x:Math.random()*W,y:Math.random()*H,
+    r:Math.random()*.9+.1,
+    a:Math.random()*.5+.05,
+    t:Math.random()*Math.PI*2,
+    dt:Math.random()*.008+.003
+  }));
+
+  if(nebulaAF){cancelAnimationFrame(nebulaAF);nebulaAF=null;}
+  bindNebulaEvents(canvas,c);
+  runNebula(canvas);
+}
+
+function exitNebula(silent){
+  if(nebulaAF){cancelAnimationFrame(nebulaAF);nebulaAF=null;}
+  document.getElementById('cv-nebula-view').classList.remove('open');
+  nebulaNodes=[];nebulaEdges=[];nebStars=[];
+  // rebuild timeline after exit (if country still set)
+  if(!silent&&currentCountry) initTimeline(currentCountry);
+}
+
+function runNebula(canvas){
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+
+  function frame(t){
+    nebulaAF=requestAnimationFrame(frame);
+    ctx.clearRect(0,0,W,H);
+
+    // deep space
+    const bg=ctx.createRadialGradient(W*.4,H*.45,0,W*.5,H*.5,Math.max(W,H)*.75);
+    bg.addColorStop(0,'rgba(18,8,4,1)');bg.addColorStop(.5,'rgba(6,4,12,1)');bg.addColorStop(1,'rgba(2,2,8,1)');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+    // twinkling stars
+    nebStars.forEach(s=>{
+      s.t+=s.dt;
+      const a=s.a*(.5+.5*Math.sin(s.t));
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(245,237,224,${a})`;ctx.fill();
+    });
+
+    // nebula cloud glow behind primary nodes
+    nebulaNodes.slice(0,Math.min(4,nebulaNodes.length)).forEach((n,i)=>{
+      const hues=['28,12,4','14,22,58','38,14,52','4,30,18'];
+      const nx=n.x+nebulaOff.x,ny=n.y+nebulaOff.y;
+      const g=ctx.createRadialGradient(nx,ny,0,nx,ny,160);
+      g.addColorStop(0,`rgba(${hues[i%4]},.12)`);g.addColorStop(1,`rgba(${hues[i%4]},0)`);
+      ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    });
+
+    // ── edges ──
+    nebulaEdges.forEach(e=>{
+      const na=nebulaNodes[e.a],nb=nebulaNodes[e.b];
+      const isActive=nebulaHover===e.a||nebulaHover===e.b;
+      const ax=na.x+nebulaOff.x,ay=na.y+nebulaOff.y;
+      const bx=nb.x+nebulaOff.x,by=nb.y+nebulaOff.y;
+      const eg=ctx.createLinearGradient(ax,ay,bx,by);
+      eg.addColorStop(0,`rgba(255,210,80,${isActive?.9:.45})`);
+      eg.addColorStop(1,`rgba(255,210,80,${isActive?.45:.2})`);
+      ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);
+      ctx.strokeStyle=eg;ctx.lineWidth=isActive?2.5:1.5;
+      ctx.setLineDash([4,7]);ctx.stroke();ctx.setLineDash([]);
+      // relation label at midpoint
+      if(isActive){
+        const mx=(ax+bx)*.5,my=(ay+by)*.5;
+        ctx.font='bold 10px Cinzel,serif';ctx.fillStyle='#f0c84a';
+        ctx.shadowColor='rgba(0,0,0,.9)';ctx.shadowBlur=4;
+        ctx.textAlign='center';ctx.fillText(e.label,mx,my-5);
+        ctx.shadowBlur=0;
+      }
+    });
+
+    // ── nodes ──
+    nebulaNodes.forEach((n,i)=>{
+      if(!n||!n.item) return; // skip invalid nodes
+      const isH=i===nebulaHover;
+      const nx=n.x+nebulaOff.x,ny=n.y+nebulaOff.y,nr=n.r;
+      const _cat=(n&&n.item&&n.item.cat)||'';
+      const filtered=(nebulaFilter!=='all')&&!n.ghost&&_cat!==nebulaFilter;
+      const dimmed=filtered?0.18:1;
+
+      // outer glow
+      const gR=nr*(isH?3.5:2);
+      const gCol=n.ghost?'60,80,160':'201,148,60';
+      const glow=ctx.createRadialGradient(nx,ny,nr*.3,nx,ny,gR);
+      glow.addColorStop(0,`rgba(${gCol},${isH?.45:.18})`);glow.addColorStop(1,`rgba(${gCol},0)`);
+      ctx.beginPath();ctx.arc(nx,ny,gR,0,Math.PI*2);ctx.fillStyle=glow;ctx.fill();
+
+      // photo clip
+      ctx.save();
+      ctx.globalAlpha=filtered?0.2:1;
+      ctx.beginPath();ctx.arc(nx,ny,nr,0,Math.PI*2);ctx.clip();
+      if(n.imgOk&&n.img){
+        ctx.filter=n.ghost?'brightness(.5) sepia(.3)':'brightness(.9) sepia(.05)';
+        ctx.drawImage(n.img,nx-nr,ny-nr,nr*2,nr*2);
+        ctx.filter='none';
+        // darken edges of image
+        const rim=ctx.createRadialGradient(nx,ny,nr*.4,nx,ny,nr);
+        rim.addColorStop(0,'rgba(0,0,0,0)');rim.addColorStop(1,'rgba(0,0,0,.5)');
+        ctx.fillStyle=rim;ctx.fill();
+      } else {
+        ctx.fillStyle=n.ghost?'rgba(20,25,55,.9)':'rgba(28,14,4,.9)';ctx.fill();
+        ctx.font=`${nr*.85}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillStyle=n.ghost?'rgba(140,160,220,.9)':'rgba(255,210,80,1)';
+        ctx.fillText(n.item.icon||'?',nx,ny);
+        ctx.textBaseline='alphabetic';
+      }
+      ctx.restore();
+
+      // border ring
+      ctx.beginPath();ctx.arc(nx,ny,nr,0,Math.PI*2);
+      const ringAlpha=(n.ghost?(isH?.7:.3):(isH?1:.75))*dimmed;
+      ctx.strokeStyle=n.ghost?`rgba(100,140,255,${ringAlpha})`:`rgba(255,210,80,${ringAlpha})`;
+      ctx.lineWidth=isH?3:2;ctx.stroke();
+      ctx.globalAlpha=1; // reset after node
+
+      // orbit arc when hovered
+      if(isH&&!n.ghost){
+        const ta=t*.0009;
+        ctx.beginPath();ctx.arc(nx,ny,nr+10,ta,ta+Math.PI*.7);
+        ctx.strokeStyle='rgba(201,168,76,.55)';ctx.lineWidth=1.5;ctx.stroke();
+        ctx.beginPath();ctx.arc(nx,ny,nr+10,ta+Math.PI,ta+Math.PI*1.4);
+        ctx.strokeStyle='rgba(201,168,76,.25)';ctx.lineWidth=1;ctx.stroke();
+      }
+
+      // label
+      if(!n.ghost||isH){
+        const raw=(n.item&&(langCur==='zh'?n.item.zh:n.item.en))||(n.item&&n.item.zh)||(n.item&&n.item.en)||'未知';
+        const label=raw.length>14?raw.slice(0,13)+'…':raw;
+        ctx.textAlign='center';
+        ctx.shadowColor='rgba(0,0,0,1)';ctx.shadowBlur=10;
+        ctx.font=isH?'bold 15px Noto Serif SC,serif':'bold 13px Noto Serif SC,serif';
+        ctx.fillStyle=filtered?'rgba(255,255,255,.25)':isH?'#ffffff':n.ghost?'rgba(160,180,255,.8)':'#ffffff';
+        ctx.fillText(label,nx,ny+nr+17);
+        if(isH){
+          ctx.font='bold 11px Cinzel,serif';
+          ctx.fillStyle='#f0c84a';
+          ctx.fillText(n.item.era,nx,ny+nr+31);
+        }
+        ctx.shadowBlur=0;
+      }
+    });
+  }
+  frame(0);
+}
+
+function bindNebulaEvents(canvas,c){
+  function hitNode(mx,my){
+    let best=-1,bestD=999;
+    nebulaNodes.forEach((n,i)=>{
+      const d=Math.hypot(mx-(n.x+nebulaOff.x),my-(n.y+nebulaOff.y));
+      if(d<n.r+12&&d<bestD){bestD=d;best=i;}
+    });
+    return best;
+  }
+
+  canvas.addEventListener('mousedown',e=>{
+    panState={sx:e.clientX,sy:e.clientY,ox:nebulaOff.x,oy:nebulaOff.y,moved:false};
+  });
+  canvas.addEventListener('mousemove',e=>{
+    if(panState){
+      const dx=e.clientX-panState.sx,dy=e.clientY-panState.sy;
+      if(Math.hypot(dx,dy)>4){panState.moved=true;}
+      if(panState.moved){
+        nebulaOff.x=panState.ox+dx;nebulaOff.y=panState.oy+dy;
+        canvas.classList.add('panning');
+      }
+      return;
+    }
+    const r=canvas.getBoundingClientRect();
+    const h=hitNode(e.clientX-r.left,e.clientY-r.top);
+    nebulaHover=h;
+    canvas.style.cursor=h>=0?'pointer':'grab';
+  });
+  canvas.addEventListener('mouseup',e=>{
+    if(panState&&!panState.moved){
+      const r=canvas.getBoundingClientRect();
+      const h=hitNode(e.clientX-r.left,e.clientY-r.top);
+      if(h>=0&&nebulaNodes[h]&&nebulaNodes[h].item) openCard(nebulaNodes[h].item.id);
+    }
+    canvas.classList.remove('panning');
+    panState=null;
+  });
+  canvas.addEventListener('mouseleave',()=>{nebulaHover=-1;panState=null;canvas.classList.remove('panning');});
+
+  // touch pan + tap
+  let tch=null;
+  canvas.addEventListener('touchstart',e=>{const t=e.touches[0];tch={sx:t.clientX,sy:t.clientY,ox:nebulaOff.x,oy:nebulaOff.y,moved:false};e.preventDefault();},{passive:false});
+  canvas.addEventListener('touchmove',e=>{if(!tch)return;const t=e.touches[0];const dx=t.clientX-tch.sx,dy=t.clientY-tch.sy;if(Math.hypot(dx,dy)>6)tch.moved=true;if(tch.moved){nebulaOff.x=tch.ox+dx;nebulaOff.y=tch.oy+dy;}e.preventDefault();},{passive:false});
+  canvas.addEventListener('touchend',e=>{if(!tch)return;if(!tch.moved){const t=e.changedTouches[0];const r=canvas.getBoundingClientRect();const h=hitNode(t.clientX-r.left,t.clientY-r.top);if(h>=0&&nebulaNodes[h]&&nebulaNodes[h].item)openCard(nebulaNodes[h].item.id);}tch=null;e.preventDefault();},{passive:false});
+}
+
+
+// ══════════════════════════════════════════════
+// ITEM DETAIL CARD
+// ══════════════════════════════════════════════
+function openCard(itemId){
+  if(!currentCountry) return;
+  const item=currentCountry.items.find(i=>i&&i.id===itemId);
+  if(!item) return;
+  currentItem=item;
+  // gcard lives inside nebula-view — guard every access
+  const G=id=>{return document.getElementById(id);};
+  const gcard=G('gcard');
+  const nebulaOpen=document.getElementById('cv-nebula-view')?.classList.contains('open');
+  if(!gcard||!nebulaOpen) return; // only update card when nebula is visible
+  
+  const imgEl=G('gc-img'); const fbEl=G('gc-img-fb');
+  if(imgEl){imgEl.src=item.img;imgEl.style.display='block';}
+  if(fbEl){fbEl.style.display='none';fbEl.textContent=item.icon;}
+  
+  const _gca=G('gc-cat');if(_gca)_gca.textContent=langCur==='zh'?item.cat:CAT_EN[item.cat]||item.cat;
+  const _gnm=G('gc-name');if(_gnm)_gnm.textContent=langCur==='zh'?item.zh:item.en;
+  const _gne=G('gc-name-en');if(_gne)_gne.textContent=item.en;
+  const _ger=G('gc-era');if(_ger)_ger.textContent=item.era;
+  const _gbi=G('gc-bio');if(_gbi)_gbi.textContent=item.desc?(langCur==='zh'?item.desc.zh:item.desc.en):'';
+  
+  const _sd=G('gc-sec-desc');if(_sd)_sd.textContent=langCur==='zh'?'简介':'About';
+  const _sf=G('gc-sec-facts');if(_sf)_sf.textContent=langCur==='zh'?'史料':'Facts';
+  const _sl=G('gc-sec-links');if(_sl)_sl.textContent=langCur==='zh'?'深入探索':'Explore More';
+  
+  const gcFacts=G('gc-facts');
+  if(gcFacts&&item.facts){
+    const facts=langCur==='zh'?item.facts.zh:item.facts.en;
+    gcFacts.innerHTML=facts.map(f=>`<div class="gc-fact"><div class="gc-fk">${f.k}</div><div class="gc-fv">${f.v}</div></div>`).join('');
+  }
+  
+  const relsWrap=G('gc-rels-wrap'); const relsEl=G('gc-rels');
+  if(relsWrap&&relsEl){
+    if(item.rels&&item.rels.length){
+      relsWrap.style.display='block';
+      const _gsr=G('gc-sec-rels');if(_gsr)_gsr.textContent=langCur==='zh'?'历史关联':'Connections';
+      relsEl.innerHTML=item.rels.map(r=>{
+        const relItem=currentCountry.items.find(i=>i&&i.id===r.id)||COUNTRIES.flatMap(c=>(c.items||[])).filter(Boolean).find(i=>i.id===r.id);
+        const name=relItem?(langCur==='zh'?relItem.zh:relItem.en):r.id;
+        return `<div class="gc-rel" onclick="jumpToRel('${r.id}')"><div class="gc-rel-dot" style="background:var(--gold)"></div><div class="gc-rel-name">${name}</div><div class="gc-rel-type">${r.type}</div></div>`;
+      }).join('');
+    } else { relsWrap.style.display='none'; }
+  }
+  
+  const gcLinks=G('gc-links');
+  if(gcLinks) gcLinks.innerHTML=`
+    <a class="gc-link gl-b" href="${item.baidu}" target="_blank" rel="noopener">🔍 百度百科</a>
+    <a class="gc-link gl-w" href="${item.wiki}" target="_blank" rel="noopener">📖 维基百科</a>
+    ${item.official?`<a class="gc-link gl-o" href="${item.official}" target="_blank" rel="noopener">🌐 官方/UNESCO</a>`:''}
+  `;
+  
+  gcard.classList.add('open');
+}
+
+function jumpToRel(itemId){
+  // Find which country has this item
+  let targetCountry=currentCountry;
+  let found=currentCountry.items.find(i=>i&&i.id===itemId);
+  if(!found){
+    for(const c of COUNTRIES){
+      found=c.items.find(i=>i&&i.id===itemId);
+      if(found){targetCountry=c;break}
+    }
+  }
+  if(found){
+    if(targetCountry.id!==currentCountry.id) openCountry(targetCountry);
+    setTimeout(()=>openCard(itemId),200);
+  }
+}
+
+function closeCard(){const gc=document.getElementById('gcard');if(gc)gc.classList.remove('open');currentItem=null;}
+
+// ══════════════════════════════════════════════
+// LANGUAGE
+// ══════════════════════════════════════════════
+function toggleLang(){
+  langCur=langCur==='zh'?'en':'zh';
+  const zh=langCur==='zh';
+  // Safe setters
+  const S=(id,v)=>{try{const e=document.getElementById(id);if(e)e.textContent=v;}catch(ex){}};
+  const Q=(sel,v)=>{try{const e=document.querySelector(sel);if(e)e.textContent=v;}catch(ex){}};
+  const SA=(sel,attr,v)=>{try{const e=document.querySelector(sel);if(e)e.setAttribute(attr,v);}catch(ex){}};
+
+  // ── Header buttons ──
+  S('cv-lang-btn', zh?'EN':'中');
+  S('glang-btn',   zh?'EN':'中');
+  S('mlabel',      zh?'音乐':'Music');
+
+  // ── Sidebar ──
+  S('sp-title', zh?'文明列表':'Civilizations');
+  SA('#search-inp','placeholder', zh?'搜索国家或文明...':'Search civilizations...');
+  Q('.bc-universe', zh?'文明宇宙':'UNIVERSE');
+
+  // ── Country view ──
+  if(currentCountry){
+    S('cv-name', zh?currentCountry.zh:currentCountry.en);
+    S('cv-sub',  zh?currentCountry.tagline.zh:currentCountry.tagline.en);
+    Q('.cv-back-label', zh?'返回':'Back');
+  }
+
+  // ── Nebula header ──
+  S('nebula-back-btn', zh?'← 返回时间轴':'← Back to Timeline');
+  S('nebula-hint',     zh?'拖拽漫游 · 点击节点探索':'Drag to explore · click nodes');
+
+  // ── Filter buttons (both sets) ──
+  document.querySelectorAll('.nf-btn').forEach(b=>{
+    const cat=b.dataset.cat;
+    if(cat==='all')       b.textContent=zh?'全部':'All';
+    else if(cat==='遗迹') b.textContent=zh?'🏛 遗迹':'🏛 Sites';
+    else if(cat==='历史人物') b.textContent=zh?'👤 人物':'👤 Figures';
+    else if(cat==='文物') b.textContent=zh?'🏺 文物':'🏺 Artifacts';
+    else if(cat==='博物馆') b.textContent=zh?'🏛 博物馆':'🏛 Museums';
+  });
+
+  // ── Nebula info panel ──
+  const _nih=document.getElementById('nebula-info-hint');
+  if(_nih)_nih.innerHTML=zh?'点击星云中的节点<br>查看详细信息':'Click nodes to<br>explore details';
+
+  // ── Card back button ──
+  Q('.gc-back-btn', zh?'← 返回星云':'← Back to Nebula');
+
+  // ── gcard section labels (if card open) ──
+  S('gc-sec-desc',  zh?'简介':'About');
+  S('gc-sec-facts', zh?'史料':'Facts');
+  S('gc-sec-links', zh?'深入探索':'Explore More');
+  S('gc-sec-rels',  zh?'历史关联':'Connections');
+
+  // ── Rebuild dynamic content ──
+  if(currentCountry){
+    try{ initTimeline(currentCountry); }catch(ex){}
+    const _nv=document.getElementById('cv-nebula-view');
+    if(currentItem&&_nv&&_nv.classList.contains('open')){
+      try{ openCard(currentItem.id); }catch(ex){}
+    }
+  }
+  try{ buildSidebar(); }catch(ex){}
+}
+
+function toggleGlobalLang(){
+  toggleLang();
+}
+
+// ══════════════════════════════════════════════
+// BREADCRUMB
+// ══════════════════════════════════════════════
+function updateBC(c){
+  const bc=document.getElementById('bc');
+  if(!c){
+    bc.innerHTML=`<span class="bci a" onclick="closeCv()">✦ <span class="bc-universe">${langCur==='zh'?'文明宇宙':'UNIVERSE'}</span></span>`;
+  } else {
+    bc.innerHTML=`
+      <span class="bci" onclick="closeCv()">✦ ${langCur==='zh'?'文明宇宙':'UNIVERSE'}</span>
+      <span class="bcs">›</span>
+      <span class="bci a">${c.flag} ${langCur==='zh'?c.zh:c.en}</span>
+    `;
+  }
+}
+
+// ══════════════════════════════════════════════
+// AUDIO ENGINE — distinct per country
+// ══════════════════════════════════════════════
+let AC=null,mg=null,musicOn=false,musicTimer=null,musicNodes=[];
+
+// Truly distinct scale & rhythm profiles per theme
+const THEMES={
+  // Egyptian/Arabic: Double harmonic / Hijaz scale
+  middle_east:{
+    scale:[261.63,277.18,329.63,349.23,392,415.30,493.88,523.25],
+    bass:[65.41,73.42,82.41],tempo:0.32,vol:0.028,decay:1.8,
+    pattern:[0,2,4,2,5,4,2,0],swing:0.15
+  },
+  // Chinese pentatonic (宫调式)
+  chinese:{
+    scale:[261.63,293.66,329.63,392,440,523.25,587.33,659.25],
+    bass:[65.41,73.42,87.31],tempo:0.38,vol:0.025,decay:2.2,
+    pattern:[0,2,3,2,5,3,2,5],swing:0
+  },
+  // Greek / Mediterranean: Dorian
+  mediterranean:{
+    scale:[261.63,293.66,311.13,349.23,392,440,466.16,523.25],
+    bass:[65.41,82.41,73.42],tempo:0.28,vol:0.026,decay:1.6,
+    pattern:[0,2,4,5,4,2,0,3],swing:0.05
+  },
+  // Japanese: In scale (half-steps)
+  japanese:{
+    scale:[261.63,277.18,349.23,392,415.30,523.25,554.37,698.46],
+    bass:[65.41,73.42,65.41],tempo:0.48,vol:0.022,decay:3.0,
+    pattern:[0,2,1,4,3,5,2,0],swing:0
+  },
+  // European: Major / Baroque feel
+  european:{
+    scale:[261.63,293.66,329.63,349.23,392,440,493.88,523.25],
+    bass:[65.41,87.31,98.00],tempo:0.22,vol:0.026,decay:1.4,
+    pattern:[0,2,4,7,4,5,3,2],swing:0
+  },
+  // Latin / Aztec: Minor + syncopation
+  latin:{
+    scale:[261.63,277.18,311.13,349.23,369.99,415.30,466.16,523.25],
+    bass:[65.41,77.78,82.41],tempo:0.20,vol:0.030,decay:1.2,
+    pattern:[0,3,2,4,0,5,3,2],swing:0.2
+  },
+  // Indian: Bhairav raga
+  indian:{
+    scale:[261.63,277.18,309.03,349.23,369.99,392.00,415.30,493.88],
+    bass:[65.41,73.42,82.41],tempo:0.30,vol:0.024,decay:2.0,
+    pattern:[0,1,3,4,5,3,1,0],swing:0.1
+  },
+  // Southeast Asian / Khmer / Gamelan-like
+  asian:{
+    scale:[261.63,294.33,336.15,392.00,441.49,522.53,588.66,672.30],
+    bass:[65.41,73.42,65.41],tempo:0.35,vol:0.022,decay:2.5,
+    pattern:[0,2,4,6,4,2,5,3],swing:0
+  },
+};
+
+function playMusic(theme){
+  if(!musicOn) return;
+  stopMusicSoft();
+  try{
+    if(!AC) AC=new(window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended') AC.resume();
+    mg=AC.createGain();
+    // Reverb chain
+    const rv=AC.createDelay(1.5);rv.delayTime.value=0.18;
+    const fb=AC.createGain();fb.gain.value=0.15;
+    const wet=AC.createGain();wet.gain.value=0.22;
+    const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2800;
+    mg.connect(rv);rv.connect(lp);lp.connect(fb);fb.connect(rv);rv.connect(wet);wet.connect(AC.destination);
+    mg.connect(AC.destination);
+    mg.gain.setValueAtTime(0,AC.currentTime);
+    mg.gain.linearRampToValueAtTime(0.55,AC.currentTime+2.5);
+    scheduleMelody(theme);
+    musicTimer=setInterval(()=>scheduleMelody(theme),40000);
+  }catch(e){}
+}
+
+function scheduleMelody(themeName){
+  const t=THEMES[themeName]||THEMES.european;
+  const now=AC.currentTime+0.3;
+  const {scale,bass,tempo,vol,decay,pattern,swing}=t;
+  
+  // Main melody — follow pattern
+  for(let wave=0;wave<6;wave++){
+    const ws=now+wave*6;
+    for(let n=0;n<pattern.length;n++){
+      const nt=ws+n*tempo*(1+swing*(n%2===1?0.15:0));
+      const oct=Math.random()<0.25?2:1;
+      const freq=scale[pattern[n]]*oct;
+      playNote(freq,nt,decay,vol*(0.6+Math.random()*.4),'sine');
+      // Harmony (5th above, softer)
+      if(Math.random()<0.3) playNote(freq*1.5,nt+tempo*.5,decay*.7,vol*.15,'sine');
+    }
+    // Bass pulse every 2 beats
+    for(let b=0;b<4;b++){
+      const bt=ws+b*tempo*2;
+      const bf=bass[b%bass.length];
+      playNote(bf,bt,decay*.6,vol*.35,'triangle');
+    }
+  }
+}
+
+function playNote(freq,start,dur,vol,type='sine'){
+  if(!AC||!mg) return;
+  const o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();
+  f.type='lowpass';f.frequency.value=3200;
+  o.type=type;o.frequency.value=freq;
+  g.gain.setValueAtTime(0,start);
+  g.gain.linearRampToValueAtTime(vol,start+0.01);
+  g.gain.exponentialRampToValueAtTime(vol*.4,start+dur*.25);
+  g.gain.exponentialRampToValueAtTime(0.0001,start+dur);
+  o.connect(f);f.connect(g);g.connect(mg);
+  o.start(start);o.stop(start+dur+.1);
+  musicNodes.push(o);
+}
+
+function stopMusicSoft(){
+  if(musicTimer){clearInterval(musicTimer);musicTimer=null}
+  musicNodes.forEach(o=>{try{o.stop()}catch(e){}});musicNodes=[];
+}
+function stopMusic(){
+  stopMusicSoft();
+  if(mg){mg.gain.linearRampToValueAtTime(0,AC?AC.currentTime+1:0);setTimeout(()=>mg=null,1500)}
+}
+
+function toggleMusic(){
+  musicOn=!musicOn;
+  const btn=document.getElementById('music-btn');btn.classList.toggle('on',musicOn);
+  const _ml2=document.getElementById('mlabel');if(_ml2)_ml2.textContent=musicOn?(langCur==='zh'?'停止':'Stop'):(langCur==='zh'?'音乐':'Music');
+  if(musicOn){
+    const theme=currentCountry?currentCountry.music:'european';
+    playMusic(theme);
+  } else stopMusic();
+}
+
+// ══════════════════════════════════════════════
+// CURSOR
+// ══════════════════════════════════════════════
+const cur=document.getElementById('cursor');
+document.addEventListener('mousemove',e=>{cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px'});
+document.addEventListener('mouseover',e=>{
+  const el=e.target.closest('.cr,.pc,.gc-rel,.gc-link,.ab,.mvbtn,.sc,.zb,.cvbk,.lang-toggle');
+  const isCanvas=e.target===glC||e.target.id==='tl-canvas'||e.target.id==='nebula-canvas';
+  cur.classList.toggle('h',!!el||isCanvas);
+});
+
+// ══════════════════════════════════════════════
+// TOUCH
+// ══════════════════════════════════════════════
+let ts=null;
+glC.addEventListener('touchstart',e=>{const t=e.touches[0];ts={x:t.clientX,y:t.clientY,rx:rotY,ry:rotX};e.preventDefault()},{passive:false});
+glC.addEventListener('touchmove',e=>{if(!ts)return;const t=e.touches[0];rotY=ts.rx+(t.clientX-ts.x)*.008;rotX=Math.max(-.8,Math.min(.8,ts.ry+(t.clientY-ts.y)*.005));autoRot=false;e.preventDefault()},{passive:false});
+glC.addEventListener('touchend',e=>{if(!ts)return;const t=e.changedTouches[0];if(Math.hypot(t.clientX-ts.x,t.clientY-ts.y)<10){const c=findAt(t.clientX,t.clientY);if(c)openCountry(c)}ts=null},{passive:false});
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+window.addEventListener('resize',()=>{
+  resize();
+  if(currentCountry) setTimeout(()=>initTimeline(currentCountry),40);
+});
+resize();
+buildSidebar();
+animate();
+
+// Preload globe images
+COUNTRIES.forEach(c=>getImg(c.tooltipImg,c.id));
+
+// Global error suppressor for remaining edge cases
+window.addEventListener('unhandledrejection', e=>e.preventDefault());
+</script>
+</body>
+</html>
